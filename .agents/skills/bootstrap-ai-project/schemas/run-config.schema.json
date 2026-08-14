@@ -1,0 +1,463 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/bootstrap-ai-project/run-config.schema.json",
+  "title": "bootstrap-ai-project run_config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target",
+    "discovery",
+    "decisions",
+    "derived",
+    "operations",
+    "results"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "derived": {
+            "required": [
+              "tdd_observability"
+            ],
+            "properties": {
+              "tdd_observability": {
+                "required": [
+                  "effective"
+                ],
+                "properties": {
+                  "effective": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "decisions": {
+            "required": [
+              "tdd_observability"
+            ],
+            "properties": {
+              "mode": {
+                "const": "full"
+              },
+              "spectra_tdd": {
+                "const": "enable"
+              }
+            }
+          },
+          "derived": {
+            "properties": {
+              "spectra_tdd": {
+                "properties": {
+                  "requested": {
+                    "const": true
+                  },
+                  "effective": {
+                    "const": true
+                  }
+                }
+              },
+              "test_profile": {
+                "properties": {
+                  "source": {
+                    "enum": [
+                      "existing",
+                      "bootstrapped"
+                    ]
+                  }
+                }
+              },
+              "tdd_observability": {
+                "properties": {
+                  "requested": {
+                    "const": true
+                  },
+                  "observer_runtime": {
+                    "enum": [
+                      "python",
+                      "node"
+                    ]
+                  },
+                  "report_pattern": {
+                    "const": "openspec/changes/{change_name}/test-evidence.md"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decisions": {
+            "properties": {
+              "mode": { "const": "docs-only" }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "decisions": {
+            "properties": {
+              "roles": {
+                "properties": {
+                  "implementer": { "$ref": "#/$defs/disabledRole" },
+                  "test-engineer": { "$ref": "#/$defs/disabledRole" },
+                  "doc-writer": { "$ref": "#/$defs/disabledRole" },
+                  "git-commit": { "$ref": "#/$defs/disabledRole" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "roleDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surfaces"],
+      "properties": {
+        "surfaces": {
+          "type": "array",
+          "items": { "enum": ["skill", "agent"] },
+          "uniqueItems": true,
+          "maxItems": 2
+        }
+      }
+    },
+    "disabledRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surfaces"],
+      "properties": {
+        "surfaces": { "type": "array", "maxItems": 0 }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo_root",
+        "selected_root",
+        "kind",
+        "snapshot_sha256"
+      ],
+      "properties": {
+        "repo_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selected_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "single-project",
+            "monorepo-target"
+          ]
+        },
+        "snapshot_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "required": [
+        "stacks",
+        "test_profiles",
+        "spectra",
+        "openspec",
+        "evidence"
+      ],
+      "properties": {
+        "stacks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "test_profiles": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "spectra": {
+          "type": "object"
+        },
+        "openspec": {
+          "type": "object"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "decisions": {
+      "type": "object",
+      "required": [
+        "mode",
+        "hosts",
+        "roles",
+        "git_strategy",
+        "spectra_tdd",
+        "dependency_execution"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "docs-only",
+            "full"
+          ]
+        },
+        "hosts": {
+          "type": "array",
+          "items": { "enum": ["claude", "codex"] },
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "implementer",
+            "test-engineer",
+            "doc-writer",
+            "git-commit"
+          ],
+          "properties": {
+            "implementer": { "$ref": "#/$defs/roleDecision" },
+            "test-engineer": { "$ref": "#/$defs/roleDecision" },
+            "doc-writer": { "$ref": "#/$defs/roleDecision" },
+            "git-commit": { "$ref": "#/$defs/roleDecision" }
+          }
+        },
+        "git_strategy": {
+          "enum": [
+            "track",
+            "ignore"
+          ]
+        },
+        "spectra_tdd": {
+          "enum": [
+            "enable",
+            "skip"
+          ]
+        },
+        "dependency_execution": {
+          "enum": [
+            "confirmed",
+            "declined",
+            "not-required",
+            "pending"
+          ]
+        },
+        "tdd_observability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "persistence",
+            "terminal_detail",
+            "proof"
+          ],
+          "properties": {
+            "mode": {
+              "const": "rules-and-hook"
+            },
+            "persistence": {
+              "const": "change-report"
+            },
+            "terminal_detail": {
+              "const": "task-summary"
+            },
+            "proof": {
+              "const": "red-green-required"
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "derived": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spectra_tdd",
+        "test_profile",
+        "commit_patterns_source",
+        "hosts"
+      ],
+      "properties": {
+        "spectra_tdd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "requested",
+            "effective"
+          ],
+          "properties": {
+            "requested": {
+              "type": "boolean"
+            },
+            "effective": {
+              "type": "boolean"
+            }
+          }
+        },
+        "test_profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source"
+          ],
+          "properties": {
+            "source": {
+              "enum": [
+                "existing",
+                "planned-bootstrap",
+                "bootstrapped",
+                "unavailable"
+              ]
+            }
+          }
+        },
+        "commit_patterns_source": {
+          "const": "skill-policy"
+        },
+        "hosts": {
+          "type": "array",
+          "items": { "enum": ["claude", "codex"] },
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "tdd_observability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "requested",
+            "effective",
+            "observer_runtime",
+            "report_pattern"
+          ],
+          "properties": {
+            "requested": {
+              "type": "boolean"
+            },
+            "effective": {
+              "type": "boolean"
+            },
+            "observer_runtime": {
+              "enum": [
+                "python",
+                "node",
+                "unavailable"
+              ]
+            },
+            "report_pattern": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "action",
+          "path",
+          "before_sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "enum": [
+              "create",
+              "update",
+              "skip",
+              "conflict",
+              "command"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "before_sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "after_sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "status"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "success",
+              "warning",
+              "skipped",
+              "rolled-back",
+              "needs-input",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

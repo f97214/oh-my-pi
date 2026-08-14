@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "mode": "rules-and-hook",
+  "persistence": "change-report",
+  "terminal_detail": "task-summary",
+  "proof": "red-green-required",
+  "supported_frameworks": [
+    "vitest",
+    "jest",
+    "pytest",
+    "xunit",
+    "go",
+    "rspec",
+    "cargo"
+  ],
+  "description_format": "TDD <Red|Green|Refactor>: task=<safe-id>; evidence=<safe-key>",
+  "report_pattern": "openspec/changes/{change_name}/test-evidence.md",
+  "required_report_marker": "<!-- bootstrap-ai-project:tdd-evidence -->",
+  "required_summary_heading": "## TDD 測試摘要",
+  "max_failure_summary_chars": 500,
+  "command_safety": {
+    "forbidden_fragments": [
+      "&&",
+      "||",
+      "&",
+      ";",
+      "|",
+      ">",
+      "<",
+      "(",
+      ")",
+      "\n",
+      "\r",
+      "`",
+      "$",
+      "%",
+      "*",
+      "?",
+      "#",
+      "{",
+      "}",
+      "!"
+    ],
+    "allow_safe_selector_suffix": true,
+    "reject_parent_or_absolute_selector_paths": true,
+    "max_selector_tokens": 16,
+    "unknown_commands": "ignore"
+  },
+  "evidence_sources": [
+    "hook-observed",
+    "source-inspected",
+    "agent-declared",
+    "unavailable"
+  ],
+  "task_statuses": [
+    "proven",
+    "tested-not-proven",
+    "failed",
+    "incomplete"
+  ],
+  "coverage": {
+    "record_only_when_existing_output_provides_it": true,
+    "install_dependencies": false
+  },
+  "raw_output": {
+    "persist": false,
+    "redact_before_context": true
+  }
+}

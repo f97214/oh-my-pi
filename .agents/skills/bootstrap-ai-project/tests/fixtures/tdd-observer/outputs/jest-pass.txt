@@ -1,0 +1,8 @@
+PASS tests/add.test.js
+  add
+    ✓ adds numbers (2 ms)
+    ✓ accepts zero
+
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshots:   0 total
