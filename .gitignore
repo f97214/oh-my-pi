@@ -106,7 +106,11 @@ openspec/.vector-search.db*
 # <<< Managed by init-project-docs <<<
 
 # The managed block above re-includes .claude/.agents/.codex/.ai wholesale, which
-# also un-ignores the __pycache__ rule at the top of this file. Re-exclude it here:
-# last matching rule wins, and this block sits outside the managed markers.
+# also un-ignores anything those trees happen to contain. Re-exclude the parts
+# that must stay out of version control: last matching rule wins, and this block
+# sits outside the managed markers so regenerating them will not drop it.
 __pycache__/
 *.pyc
+
+# Per-developer overrides; settings.json is the shared one.
+.claude/settings.local.json
