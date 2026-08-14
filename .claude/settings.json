@@ -1,0 +1,94 @@
+{
+  "env": {
+    "PYTHONIOENCODING": "UTF-8",
+    "PYTHONUTF8": "1"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.ai/bootstrap-ai-project/hooks/claim-ledger.py"
+            ],
+            "command": "python",
+            "timeout": 15,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|Grep|Glob"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.ai/bootstrap-ai-project/hooks/verify-gate.py"
+            ],
+            "command": "python",
+            "timeout": 15,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.ai/bootstrap-ai-project/hooks/verify-gate.py"
+            ],
+            "command": "python",
+            "timeout": 60,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.ai/bootstrap-ai-project/hooks/claim-guard.py"
+            ],
+            "command": "python",
+            "statusMessage": "檢查宣稱是否有證據…",
+            "timeout": 15,
+            "type": "command"
+          },
+          {
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.ai/bootstrap-ai-project/hooks/verify-gate.py"
+            ],
+            "command": "python",
+            "statusMessage": "收工前跑驗證…",
+            "timeout": 420,
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
+  "includeGitInstructions": false,
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git switch -c:*)",
+      "Bash(git branch -d:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git worktree add:*)",
+      "Bash(git worktree remove:*)",
+      "Read(./.env)",
+      "Read(./**/.env)",
+      "Read(./**/*.pem)",
+      "Read(./**/id_rsa)"
+    ]
+  }
+}
