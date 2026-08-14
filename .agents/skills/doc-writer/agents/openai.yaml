@@ -1,0 +1,8 @@
+# bootstrap-ai-project:role:doc-writer:skill:v1
+interface:
+  display_name: "文件撰寫者"
+  short_description: "依 repository 證據更新使用者或開發文件，維持來源可追溯且不臆測未確認行為。"
+  default_prompt: "使用 $doc-writer 執行已明確指定的角色工作流。"
+
+policy:
+  allow_implicit_invocation: false

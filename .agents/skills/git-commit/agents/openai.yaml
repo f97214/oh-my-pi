@@ -1,0 +1,8 @@
+# bootstrap-ai-project:role:git-commit:skill:v1
+interface:
+  display_name: "Git Commit 執行者"
+  short_description: "只在使用者明確要求時，審查既有 staged scope、機密風險與驗證證據後建立單一目的 commit。"
+  default_prompt: "使用 $git-commit 執行已明確指定的角色工作流。"
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,60 @@
+{
+  "description": "與 Claude 共用 .ai/bootstrap-ai-project runtime 的專案治理 hooks。",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .ai/bootstrap-ai-project/hooks/verify-gate.py",
+            "timeout": 60,
+            "statusMessage": "建立驗證基準…"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .ai/bootstrap-ai-project/hooks/claim-ledger.py",
+            "timeout": 15,
+            "statusMessage": "記錄驗證證據…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .ai/bootstrap-ai-project/hooks/claim-guard.py",
+            "timeout": 15,
+            "statusMessage": "檢查宣稱是否有證據…"
+          },
+          {
+            "type": "command",
+            "command": "python .ai/bootstrap-ai-project/hooks/verify-gate.py",
+            "timeout": 420,
+            "statusMessage": "收工前跑驗證…"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .ai/bootstrap-ai-project/hooks/verify-gate.py",
+            "timeout": 15,
+            "statusMessage": "清理驗證狀態…"
+          }
+        ]
+      }
+    ]
+  }
+}

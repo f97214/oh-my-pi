@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "max_blocks": 3,
+  "skip_when_clean": true,
+  "checks": [
+    {
+      "name": "skill lint",
+      "command": ["python", ".claude/tools/lint_skills.py"],
+      "paths": [".claude/skills/", ".agents/skills/", ".claude/tools/", ".codex/agents/", ".claude/agents/"],
+      "timeout": 120
+    },
+    {
+      "name": "說明網頁來源完整性",
+      "command": ["python", ".claude/tools/build_docs.py", "--check"],
+      "paths": [".claude/docs/", ".claude/skills/", ".agents/skills/", ".claude/tools/"],
+      "timeout": 60
+    },
+    {
+      "name": "tools 測試",
+      "command": ["python", "-m", "unittest", "discover", "-s", ".claude/tools/tests"],
+      "paths": [".claude/tools/", ".agents/skills/bootstrap-ai-project/", ".claude/skills/bootstrap-ai-project/"],
+      "timeout": 120
+    },
+    {
+      "name": "bootstrap CLI parity",
+      "command": ["python", "-m", "unittest", "discover", "-s", ".agents/skills/bootstrap-ai-project/tests", "-p", "test_cli_parity.py"],
+      "paths": [".agents/skills/bootstrap-ai-project/", ".claude/skills/bootstrap-ai-project/"],
+      "timeout": 300
+    },
+    {
+      "name": "雙宿主角色 renderer",
+      "command": ["python", "-m", "unittest", "discover", "-s", ".agents/skills/bootstrap-ai-project/tests", "-p", "test_role_rendering.py"],
+      "paths": [".agents/skills/bootstrap-ai-project/", ".claude/skills/bootstrap-ai-project/"],
+      "timeout": 180
+    },
+    {
+      "name": "TDD observer",
+      "command": ["python", "-m", "unittest", "discover", "-s", ".agents/skills/bootstrap-ai-project/tests", "-p", "test_tdd_observer.py"],
+      "paths": [".agents/skills/bootstrap-ai-project/"],
+      "timeout": 180
+    },
+    {
+      "name": "Spectra 相容性",
+      "command": ["python", "-m", "unittest", "discover", "-s", ".agents/skills/bootstrap-ai-project/tests", "-p", "test_spectra_compatibility.py"],
+      "paths": [".agents/skills/bootstrap-ai-project/"],
+      "timeout": 120
+    }
+  ]
+}
