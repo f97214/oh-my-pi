@@ -1,0 +1,4 @@
+# existing rule
+node_modules/
+# >>> Managed by init-project-docs >>>
+/.claude/

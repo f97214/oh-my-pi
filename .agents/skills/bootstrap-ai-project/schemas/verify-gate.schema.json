@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/bootstrap-ai-project/verify-gate.schema.json",
+  "title": "verify-gate 設定",
+  "description": "Session lifecycle 驗證閘門在 Stop 前要跑的命令。命令以陣列執行，不經 shell。",
+  "type": "object",
+  "required": ["schema_version", "checks"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "max_blocks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 3,
+      "description": "同一 session 連續擋下的上限，超過即放行並改以 additionalContext 告知，避免無限迴圈。"
+    },
+    "skip_when_clean": {
+      "type": "boolean",
+      "default": true,
+      "description": "相較成功 checkpoint 沒有未提交或已提交變更時直接放行，純問答的回合不必跑驗證。"
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "command"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "失敗訊息中顯示的名稱。"
+          },
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "以陣列形式執行，不經 shell。第一個元素為 python 時會換成目前的直譯器。"
+          },
+          "paths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "僅當這些路徑前綴有變更時才跑；省略代表一律跑。無法判斷變更時一律跑，不靜默跳過。"
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 600,
+            "default": 300,
+            "description": "秒。"
+          }
+        }
+      }
+    }
+  }
+}

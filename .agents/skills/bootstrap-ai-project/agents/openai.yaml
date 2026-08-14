@@ -1,0 +1,7 @@
+interface:
+  display_name: "Bootstrap AI Project"
+  short_description: "建立 Claude／Codex 雙入口與專案治理"
+  default_prompt: "使用 $bootstrap-ai-project 對指定專案執行 Discover、Decide、Preview、Apply、Verify。"
+
+policy:
+  allow_implicit_invocation: false
