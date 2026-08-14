@@ -26,7 +26,9 @@ bun run build:native     # 改動 Rust crate 或 packages/natives 後必跑
 bun run lint / fmt / fix
 ```
 
-**本機現況**：`bun` 未安裝、`node_modules/` 不存在，上列 `bun` 命令目前都跑不起來。先跑 `bun setup`。`cargo`（nightly-2026-07-28）與 `python` 可用。
+**本機現況**（2026-08-14）：bun `1.3.14`、node、cargo（nightly-2026-07-28）、python `3.14.0`、docker、VS Build Tools 2022 都已就緒，`node_modules/` 也已建立。
+
+但 `bun setup` **卡在第二步**：`bun run build:native` 失敗，所以 `packages/natives/native/` 底下沒有 `.node` addon，`omp` 也沒進 PATH。原因是 `LIB`／`INCLUDE` 為空（工具有裝，只是環境變數沒帶進 shell），與 `cargo check` 撞的 `LNK1104: msvcrt.lib` 同源。修法見 `docs/DEVELOPMENT.md` 的「Windows：先把 MSVC 環境帶進來」。
 
 ## Claude Code 專屬規則
 
@@ -49,8 +51,10 @@ bun run lint / fmt / fix
 
 **已知缺口**：閘門目前**只涵蓋 Python 工具鏈**（skill lint、build_docs、tools 與 bootstrap 測試），**TypeScript 與 Rust 兩側都零覆蓋**：
 
-- TypeScript —— `bun` 未安裝、`node_modules/` 不存在。裝好後把 `bun run check:ts` 與 `bun run ci:test:smoke` 加進 `verify-gate.json`（`timeout` 上限 600 秒，完整 `bun test` 塞不進去）。
-- Rust —— `cargo check` 在此環境失敗（`LNK1104: 無法開啟檔案 'msvcrt.lib'`），因為 `LIB`／`INCLUDE` 未設定。閘門直接 spawn 命令、**不經 shell**，所以它無法自行 source `vcvarsall.bat`。要納入閘門，必須先讓 `LIB`／`INCLUDE` 在 Claude Code 啟動的環境中就已設好（例如從 Developer Command Prompt 啟動，或把它們寫進 `.claude/settings.json` 的 `env`），確認 `cargo check --workspace --all-targets` 真的能跑完再加。
+- TypeScript —— bun 與相依都好了，缺的是**先實際跑過一次**確認跑得完，之後才把 `bun run check:ts` 與 `bun run ci:test:smoke` 加進 `verify-gate.json`（`timeout` 上限 600 秒，完整 `bun test` 塞不進去）。
+- Rust —— `cargo check` 在此環境失敗（`LNK1104: 無法開啟檔案 'msvcrt.lib'`），因為 `LIB`／`INCLUDE` 未設定。閘門直接 spawn 命令、**不經 shell**，所以它無法自行 source `vcvars64.bat`。要納入閘門，必須先讓 `LIB`／`INCLUDE` 在 Claude Code 啟動的環境中就已設好，並確認 `cargo check --workspace --all-targets` 真的能跑完再加。
+
+**沒驗證過的命令不要加進閘門** —— 這條是踩過坑寫下來的。
 
 ## Spectra / SDD
 
