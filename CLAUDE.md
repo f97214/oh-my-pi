@@ -28,7 +28,7 @@ bun run lint / fmt / fix
 
 **本機現況**（2026-08-15 實測）：`bun setup` 四步都已走完 —— `node_modules/` 已建立、原生 addon `packages/natives/native/pi_natives.win32-x64-modern.node` 已產出、`omp` 可在任意目錄執行（`%USERPROFILE%\.bun\bin` 已在持久化的 User PATH 上，PowerShell、cmd.exe、Git Bash 三者都回報 `omp/17.3.4`）。`bun run build` 也跑得完，產出 `packages/coding-agent/dist/omp.exe`（約 154 MB）；TypeScript 測試跑得動（`bun test` 對三個測試檔：147 pass／2 skip／3 fail，約 12 秒，失敗成因未查），`bun run --cwd packages/coding-agent check` 與 `bun run --cwd packages/browser-relay check` 皆 exit 0。node、cargo（nightly-2026-07-28）、python `3.14.0`、docker、VS Build Tools 2022 沿用 2026-08-14 的量測，本次未重測。
 
-**仍未確認**：`cargo check` 與 Rust 建置自 2026-08-14 起沒再實測過 —— 當時撞 `LNK1104: msvcrt.lib`，原因是 `LIB`／`INCLUDE` 為空（工具有裝，只是環境變數沒帶進 shell）。原生 addon 已產出**不等於**這個問題已解決。修法見 `docs/DEVELOPMENT.md` 的「Windows：先把 MSVC 環境帶進來」。
+**Rust（2026-08-15 實測）**：`bun run build:native` 在 `LIB`／`INCLUDE`／`VCINSTALLDIR`／`VSINSTALLDIR` 全空的 Git Bash 裡**跑得完**，所以 build 不需要先帶 MSVC 環境。`cargo check --workspace --all-targets` 則以 exit 101 失敗，但**與 MSVC 無關** —— 是 `crates/pi-builtins/src/stat.rs` 測試碼的 6 個 `E0425`（整份輸出 `LNK1104` 出現 0 次）。2026-08-14 那次 `LNK1104` 的成因未再現，該節現在是排解手冊而非必經步驟。
 
 ## Claude Code 專屬規則
 
@@ -52,7 +52,7 @@ bun run lint / fmt / fix
 **已知缺口**：閘門目前**只涵蓋 Python 工具鏈**（skill lint、build_docs、tools 與 bootstrap 測試），**TypeScript 與 Rust 兩側都零覆蓋**：
 
 - TypeScript —— bun 與相依都好了，缺的是**先實際跑過一次**確認跑得完，之後才把 `bun run check:ts` 與 `bun run ci:test:smoke` 加進 `verify-gate.json`（`timeout` 上限 600 秒，完整 `bun test` 塞不進去）。
-- Rust —— `cargo check` 在此環境失敗（`LNK1104: 無法開啟檔案 'msvcrt.lib'`），因為 `LIB`／`INCLUDE` 未設定。閘門直接 spawn 命令、**不經 shell**，所以它無法自行 source `vcvars64.bat`。要納入閘門，必須先讓 `LIB`／`INCLUDE` 在 Claude Code 啟動的環境中就已設好，並確認 `cargo check --workspace --all-targets` 真的能跑完再加。
+- Rust —— 兩個阻礙都**不是** MSVC 環境問題（2026-08-15 實測）：`cargo check --workspace --all-targets` 失敗於 `crates/pi-builtins` 測試碼的 6 個 `E0425`（原始碼缺陷）；而 `bun run check:rs` 在非 CI 會直接跳過，且它跑的是 `fmt --check` 與 `clippy`、不是 `cargo check`，原樣入閘門會變成永遠通過卻沒驗任何東西的項目。要納入得先修編譯錯誤，再決定跑哪個命令與如何處理跳過邏輯。
 
 **沒驗證過的命令不要加進閘門** —— 這條是踩過坑寫下來的。
 

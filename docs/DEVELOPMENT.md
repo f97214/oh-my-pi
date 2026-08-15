@@ -50,7 +50,7 @@ winget install Rustlang.Rustup                                    # Windows
 winget install Microsoft.VisualStudio.2022.BuildTools
 ```
 
-安裝時要勾「Desktop development with C++」工作負載（`Microsoft.VisualStudio.Workload.VCTools`）。裝完還有一步環境設定，見[下面的 Windows 段落](#windows先把-msvc-環境帶進來)。
+安裝時要勾「Desktop development with C++」工作負載（`Microsoft.VisualStudio.Workload.VCTools`）。裝完通常就直接能用 —— 萬一撞到 `LNK1104`，見[下面的 Windows 段落](#windows先把-msvc-環境帶進來)。
 
 **bazelisk**（僅 linux/macOS 且要建非 host 目標）：
 
@@ -78,10 +78,11 @@ CI 的 Rust 驗證用的就是 bazelisk（`.github/workflows/ci.yml`）。
 | `omp` 是否在 PATH | ✓ 已可用（2026-08-15 實測）—— `%USERPROFILE%\.bun\bin` 已加進持久化的 User PATH，PowerShell、cmd.exe、Git Bash 三者都回報 `omp/17.3.4` |
 | 獨立執行檔 | ✓ `bun run build` 跑得完，產出 `packages/coding-agent/dist/omp.exe`（約 154 MB，2026-08-15 實測） |
 | TypeScript 測試 | ✓ 跑得動（2026-08-15 實測，細節見 [`TESTING.md`](TESTING.md)） |
-| `cargo check` / Rust 建置 | ✗ **未確認** —— 2026-08-14 撞 `LNK1104: msvcrt.lib`，本次未重測 |
+| `bun run build:native` | ✓ 跑得完（2026-08-15 實測，且在 `LIB`／`INCLUDE` 全空的 Git Bash 裡） |
+| `cargo check --workspace --all-targets` | ✗ 失敗（2026-08-15 實測）—— 但**與 MSVC 環境無關**，是 `crates/pi-builtins` 測試碼的編譯錯誤，見[閘門缺口](#閘門目前的覆蓋缺口) |
 | bazel / bazelisk | ✗ 未裝（Windows 用不到） |
 
-`bun setup` 的四個步驟在本機都已走完：原生 addon 在 `packages/natives/native/` 底下，`omp` 也已在 PATH 上。**本次只確認 addon 檔案存在，沒有重跑 `build:native`** —— 依 2026-08-14 的實測，在沒帶 `LIB`／`INCLUDE` 的 shell 裡重建會撞 `LNK1104`（本次未重驗），見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。
+`bun setup` 的四個步驟在本機都已走完：原生 addon 在 `packages/natives/native/` 底下，`omp` 也已在 PATH 上。2026-08-15 重跑過 `bun run build:native` 確認它**不需要**先帶 MSVC 環境，詳見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。
 
 ## 起步
 
@@ -223,15 +224,18 @@ OMP_NATIVE_BUILD_BACKEND=cargo bun run build:native
 
 ### Windows：先把 MSVC 環境帶進來
 
-在一般的 PowerShell 或 Git Bash 裡跑 `bun run build:native`（或 `cargo check`）會這樣死：
+2026-08-14 曾在這個環境撞到：
 
 ```
 LINK : fatal error LNK1104: 無法開啟檔案 'msvcrt.lib'
 ```
 
-**工具本身沒問題** —— VS Build Tools 有裝、Windows SDK 也在。問題是 `LIB` 與 `INCLUDE` 兩個環境變數是空的，linker 找不到 CRT 與 SDK 的 lib 目錄。這兩個變數是由 MSVC 的環境設定腳本注入的，不會憑空存在。
+**但這不是必然，範圍也比原本記載的窄得多。** 2026-08-15 在 `LIB`、`INCLUDE`、`VCINSTALLDIR`、`VSINSTALLDIR` **全部為空**的 Git Bash 裡實測：
 
-兩種解法，挑一個：
+- `bun run build:native` **正常跑完**（exit 0，linker 也順利產出 `.lib` 與 `.exp`）。rustc 在 Windows 上會自己透過登錄檔定位 MSVC 並替 `link.exe` 補上 lib 路徑，多數情況根本不需要 vcvars。
+- `cargo check --workspace --all-targets` 確實失敗，但整份輸出裡**沒有出現過任何 linker 錯誤** —— 那是另一回事，見[閘門缺口](#閘門目前的覆蓋缺口)。
+
+所以這節是**排解手冊，不是必經步驟**。真的撞到 `LNK1104` 才代表 rustc 的自動定位在你的環境失效了（多版本 VS 並存、Build Tools 安裝不完整之類），這時用下面兩種方法之一補上環境變數：
 
 1. **從 Developer PowerShell for VS 2022 啟動**（開始選單搜尋得到），再在那個 shell 裡跑 bun 命令。
 2. **先跑 vcvars**：
@@ -373,15 +377,12 @@ logger.error("MCP request failed", { url, method });
 
 `timeout` 上限是 600 秒，完整的 `bun test` 塞不進去 —— 那個留給 CI。
 
-**Rust** —— `cargo check --workspace --all-targets` 在本機失敗（2026-08-14 實測，之後未再重測）：
+**Rust** —— 2026-08-15 實測，阻礙有兩個，**都不是** MSVC 環境問題：
 
-```
-LINK : fatal error LNK1104: 無法開啟檔案 'msvcrt.lib'
-```
+1. `cargo check --workspace --all-targets` 在 `LIB`／`INCLUDE` 全空的環境下編譯得到最後，然後以 exit 101 失敗於 `crates/pi-builtins/src/stat.rs` 的 6 個 `E0425: cannot find function tempdir` —— 測試碼取用了定義在 `crate::cmp::tests` 而該處不可見的輔助函式。這是原始碼缺陷，與 Windows 或連結器無關（整份輸出裡 `LNK1104` 出現 0 次）。
+2. `bun run check:rs` 在非 CI 環境**直接跳過**（`Skipping check:rs (not in CI and no Rust-affecting changes were found)`），而且它實際跑的是 `cargo fmt --check` 與 `cargo clippy -D warnings`，並不是 `cargo check`。把它原樣放進閘門，會得到一個永遠通過卻什麼都沒驗的項目。
 
-跟當時原生 addon 建置失敗是**同一個根因**：`LIB` 與 `INCLUDE` 為空。完整說明與兩種解法見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。原生 addon 現在已經產出，但**這不代表 `cargo check` 已經能跑** —— 在把 Rust 檢查加進閘門之前仍要自己實測一次。
-
-對閘門而言多一層限制：**hook 直接 spawn 命令、不經 shell**，所以它無法自己先 source `vcvars64.bat`。要納入 Rust 檢查，得讓 `LIB`／`INCLUDE` 在 Claude Code **啟動時**就已存在 —— 從 Developer PowerShell 啟動，或把兩者寫進 `.claude/settings.json` 的 `env`。確認 `cargo check --workspace --all-targets` 真的跑得完（冷編譯可能超過 600 秒上限）之後再加。
+要納入 Rust 檢查，得先修掉第 1 點的編譯錯誤，再決定閘門該跑哪個命令、以及怎麼處理第 2 點的跳過邏輯（例如帶 `CI=1`）。冷編譯可能超過 600 秒上限，這也要一併確認。
 
 ## SDD 流程
 
