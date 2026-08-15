@@ -397,7 +397,7 @@ The script handles version bump, CHANGELOG finalization, commit, tag, publish, a
 
 兩者都是**防呆不是防駭**，擋的是疏忽而非刻意規避。
 
-**目前缺口**：閘門只涵蓋 Python 工具鏈，TypeScript 與 Rust 兩側都零覆蓋。TypeScript 是因為還沒實際跑過 `check:ts`／`ci:test:smoke` 確認跑得完（bun 與相依本身已就緒）；Rust 是因為 `cargo check --workspace --all-targets` 目前失敗於 `crates/pi-builtins` 測試碼的編譯錯誤（2026-08-15 實測，與 MSVC 環境無關），且 `bun run check:rs` 在非 CI 會直接跳過。**沒驗證過的命令不要加進閘門。** 補齊方式與 Windows 的 MSVC 環境設定見 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)。
+**目前缺口**：閘門只涵蓋 Python 工具鏈，TypeScript 與 Rust 兩側都零覆蓋。TypeScript 是因為還沒實際跑過 `check:ts`／`ci:test:smoke` 確認跑得完（bun 與相依本身已就緒）；Rust 是因為 `bun run check:rs` 在非 CI 且工作樹無 Rust 改動時會直接跳過，且它跑的是 `fmt --check` 與 `clippy`、不是 `cargo check`（`cargo check --workspace --all-targets` 本身已於 2026-08-15 實測通過）。**沒驗證過的命令不要加進閘門。** 補齊方式與 Windows 的 MSVC 環境設定見 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)；跳過條件與各 Rust task 的實際命令見 [`docs/TESTING.md`](docs/TESTING.md#rust-task-的跳過行為)。
 
 ## 來源
 

@@ -2670,9 +2670,15 @@ mod win_tests {
 		(code, capture.out(), capture.err())
 	}
 
+	fn canonical_tempdir() -> (tempfile::TempDir, PathBuf) {
+		let dir = tempfile::tempdir().unwrap();
+		let canon = fs::canonicalize(dir.path()).unwrap();
+		(dir, canon)
+	}
+
 	#[test]
 	fn reports_size_and_type_for_regular_file() {
-		let (_dir, root) = tempdir();
+		let (_dir, root) = canonical_tempdir();
 		fs::write(root.join("data.bin"), b"hello world!").unwrap();
 
 		let (code, stdout, stderr) = run_in(root, vec!["-c", "%s %F", "data.bin"]);
@@ -2683,7 +2689,7 @@ mod win_tests {
 
 	#[test]
 	fn empty_file_reports_regular_empty_file() {
-		let (_dir, root) = tempdir();
+		let (_dir, root) = canonical_tempdir();
 		fs::write(root.join("empty.bin"), b"").unwrap();
 
 		let (code, stdout, stderr) = run_in(root, vec!["-c", "%F", "empty.bin"]);
@@ -2694,7 +2700,7 @@ mod win_tests {
 
 	#[test]
 	fn percent_n_prints_operand_as_typed() {
-		let (_dir, root) = tempdir();
+		let (_dir, root) = canonical_tempdir();
 		fs::write(root.join("data.bin"), b"x").unwrap();
 
 		let (code, stdout, stderr) = run_in(root, vec!["-c", "%n", "data.bin"]);
@@ -2705,7 +2711,7 @@ mod win_tests {
 
 	#[test]
 	fn nonexistent_file_reports_cannot_stat() {
-		let (_dir, root) = tempdir();
+		let (_dir, root) = canonical_tempdir();
 
 		let (code, stdout, stderr) = run_in(root, vec!["-c", "%s", "missing.bin"]);
 		assert_eq!(code, 1);
@@ -2717,7 +2723,7 @@ mod win_tests {
 	/// error on a real path.
 	#[test]
 	fn file_system_mode_succeeds() {
-		let (_dir, root) = tempdir();
+		let (_dir, root) = canonical_tempdir();
 		fs::write(root.join("data.bin"), b"x").unwrap();
 
 		let (code, _stdout, stderr) = run_in(root, vec!["-f", "-c", "%T", "data.bin"]);
@@ -2727,7 +2733,7 @@ mod win_tests {
 
 	#[test]
 	fn file_system_mode_rejects_missing_file() {
-		let (_dir, root) = tempdir();
+		let (_dir, root) = canonical_tempdir();
 
 		let (code, stdout, stderr) = run_in(root, vec!["-f", "-c", "%T", "missing.bin"]);
 		assert_eq!(code, 1);

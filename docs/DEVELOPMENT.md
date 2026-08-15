@@ -79,7 +79,7 @@ CI 的 Rust 驗證用的就是 bazelisk（`.github/workflows/ci.yml`）。
 | 獨立執行檔 | ✓ `bun run build` 跑得完，產出 `packages/coding-agent/dist/omp.exe`（約 154 MB，2026-08-15 實測） |
 | TypeScript 測試 | ✓ 跑得動（2026-08-15 實測，細節見 [`TESTING.md`](TESTING.md)） |
 | `bun run build:native` | ✓ 跑得完（2026-08-15 實測，且在 `LIB`／`INCLUDE` 全空的 Git Bash 裡） |
-| `cargo check --workspace --all-targets` | ✗ 失敗（2026-08-15 實測）—— 但**與 MSVC 環境無關**，是 `crates/pi-builtins` 測試碼的編譯錯誤，見[閘門缺口](#閘門目前的覆蓋缺口) |
+| `cargo check --workspace --all-targets` | ✓ 通過（2026-08-15 實測，同樣在 `LIB`／`INCLUDE` 全空的環境） |
 | bazel / bazelisk | ✗ 未裝（Windows 用不到） |
 
 `bun setup` 的四個步驟在本機都已走完：原生 addon 在 `packages/natives/native/` 底下，`omp` 也已在 PATH 上。2026-08-15 重跑過 `bun run build:native` 確認它**不需要**先帶 MSVC 環境，詳見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。
@@ -233,7 +233,7 @@ LINK : fatal error LNK1104: 無法開啟檔案 'msvcrt.lib'
 **但這不是必然，範圍也比原本記載的窄得多。** 2026-08-15 在 `LIB`、`INCLUDE`、`VCINSTALLDIR`、`VSINSTALLDIR` **全部為空**的 Git Bash 裡實測：
 
 - `bun run build:native` **正常跑完**（exit 0，linker 也順利產出 `.lib` 與 `.exp`）。rustc 在 Windows 上會自己透過登錄檔定位 MSVC 並替 `link.exe` 補上 lib 路徑，多數情況根本不需要 vcvars。
-- `cargo check --workspace --all-targets` 確實失敗，但整份輸出裡**沒有出現過任何 linker 錯誤** —— 那是另一回事，見[閘門缺口](#閘門目前的覆蓋缺口)。
+- `cargo check --workspace --all-targets` 同樣通過（exit 0）。它一度失敗，但那是 `crates/pi-builtins` 一個 Windows 專屬測試模組缺少輔助函式所致，與連結器無關 —— 已修，見[閘門缺口](#閘門目前的覆蓋缺口)。
 
 所以這節是**排解手冊，不是必經步驟**。真的撞到 `LNK1104` 才代表 rustc 的自動定位在你的環境失效了（多版本 VS 並存、Build Tools 安裝不完整之類），這時用下面兩種方法之一補上環境變數：
 
@@ -246,7 +246,7 @@ LINK : fatal error LNK1104: 無法開啟檔案 'msvcrt.lib'
 
    跑完的那個 shell 才有 `LIB`／`INCLUDE`。
 
-這跟[收工閘門的覆蓋缺口](#閘門目前的覆蓋缺口)是**同一個環境問題**：閘門 hook 直接 spawn 命令、不經 shell，所以它沒辦法自己 source `vcvars64.bat`。要讓 Rust 檢查進閘門，得讓這兩個變數在 Claude Code 啟動時就已存在。
+注意：這**不是**[收工閘門覆蓋缺口](#閘門目前的覆蓋缺口)的成因。閘門 hook 直接 spawn 命令、不經 shell，確實無法自己 source `vcvars64.bat`；但 2026-08-15 的實測顯示 Rust 命令在這兩個變數全空時本來就跑得起來，所以那個缺口的成因另有其事，見該節。
 
 ## 常用指令
 
@@ -254,7 +254,7 @@ LINK : fatal error LNK1104: 無法開啟檔案 'msvcrt.lib'
 |---|---|
 | 型別＋lint 檢查（**取代 `tsc`**） | `bun check` |
 | 只檢查 TS | `bun run check:ts` |
-| 只檢查 Rust | `bun run check:rs` |
+| 只檢查 Rust | `bun run check:rs`（非 CI 且工作樹無 Rust 改動時會跳過，見 [`TESTING.md`](TESTING.md#rust-task-的跳過行為)） |
 | Lint | `bun run lint` |
 | 格式化 | `bun run fmt` |
 | 自動修正 | `bun run fix` |
@@ -377,12 +377,13 @@ logger.error("MCP request failed", { url, method });
 
 `timeout` 上限是 600 秒，完整的 `bun test` 塞不進去 —— 那個留給 CI。
 
-**Rust** —— 2026-08-15 實測，阻礙有兩個，**都不是** MSVC 環境問題：
+**Rust** —— 2026-08-15 實測，MSVC 環境**不是**問題，剩下一個阻礙：
 
-1. `cargo check --workspace --all-targets` 在 `LIB`／`INCLUDE` 全空的環境下編譯得到最後，然後以 exit 101 失敗於 `crates/pi-builtins/src/stat.rs` 的 6 個 `E0425: cannot find function tempdir` —— 測試碼取用了定義在 `crate::cmp::tests` 而該處不可見的輔助函式。這是原始碼缺陷，與 Windows 或連結器無關（整份輸出裡 `LNK1104` 出現 0 次）。
-2. `bun run check:rs` 在非 CI 環境**直接跳過**（`Skipping check:rs (not in CI and no Rust-affecting changes were found)`），而且它實際跑的是 `cargo fmt --check` 與 `cargo clippy -D warnings`，並不是 `cargo check`。把它原樣放進閘門，會得到一個永遠通過卻什麼都沒驗的項目。
+`cargo check --workspace --all-targets` 本身**現在是通過的**（2026-08-15 實測，exit 0，且在 `LIB`／`INCLUDE` 全空的環境）。它一度以 exit 101 失敗於 `crates/pi-builtins/src/stat.rs` 的 6 個 `E0425`，成因是該檔的 `#[cfg(all(test, windows))] mod win_tests` 缺少 temp dir 輔助函式 —— **只在 Windows 上編譯，所以 CI 從來看不到**。已補上該模組自己的 helper（與 `touch.rs`、`truncate.rs`、`cmp.rs` 的既有慣例一致）。
 
-要納入 Rust 檢查，得先修掉第 1 點的編譯錯誤，再決定閘門該跑哪個命令、以及怎麼處理第 2 點的跳過邏輯（例如帶 `CI=1`）。冷編譯可能超過 600 秒上限，這也要一併確認。
+剩下的阻礙只有一個：`bun run check:rs` 在**非 CI 且工作樹沒有 Rust 相關改動**時直接以 exit 0 跳過（`Skipping check:rs (not in CI and no Rust-affecting changes were found)`），而且它實際跑的是 `cargo fmt --check` 與 `cargo clippy -D warnings`，並不是 `cargo check`。把它原樣放進閘門，得到的會是一個時而驗、時而只是空跑通過的項目 —— 而只看退出碼的閘門分辨不出這兩者。完整的跳過條件與各 task 的實際命令見 [`TESTING.md`](TESTING.md#rust-task-的跳過行為)。
+
+要納入 Rust 檢查，得決定閘門跑哪個命令、以及怎麼處理跳過邏輯（例如帶 `CI=1`）。本次量到約 22 秒（快取熱），但全新 checkout 的冷編譯可能超過 600 秒上限，加之前要自己量一次。
 
 ## SDD 流程
 
