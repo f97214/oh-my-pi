@@ -58,7 +58,7 @@
 
 ## 已知限制
 
-- **本機目前跑不了 TypeScript 測試**：`bun` 未安裝、`node_modules/` 不存在。先跑 `bun setup`（安裝 workspace 相依並建置 `@oh-my-pi/pi-natives`）。
+- **本機的 TypeScript 測試跑得動**（2026-08-15 實測）：`bun` `1.3.14` 與 `node_modules/` 都已就緒，以 `bun test` 對三個測試檔跑出 147 pass／2 skip／3 fail，約 12 秒。那 3 個失敗的成因**未查**，也還沒跑過完整的 `bun test`。全新 clone 仍要先跑 `bun setup`（安裝 workspace 相依並建置 `@oh-my-pi/pi-natives`）。
 - 改動 Rust crate 或 `packages/natives` 後要重跑 `bun run build:native`。
 - Rust 側需要 `rust-toolchain.toml` 指定的 `nightly-2026-07-28`。
 - Windows 上輸出中文若出現亂碼，設 `PYTHONUTF8=1` 或修正 console encoding，**不要改檔案編碼**。

@@ -64,18 +64,24 @@ CI 的 Rust 驗證用的就是 bazelisk（`.github/workflows/ci.yml`）。
 
 **Nix 使用者**可以跳過上面全部：`nix develop` 會給你釘住的 Bun 與 Rust toolchain，加上所有原生建置相依。
 
-### 本機目前狀態（2026-08-14 實測）
+### 本機目前狀態
+
+這張表**新舊證據並存**：標「2026-08-15」的列是本次實測改寫的，其餘沿用 2026-08-14 的量測、本次未重跑。
 
 | 項目 | 狀態 |
 |---|---|
-| bun `1.3.14`、node、rustup／cargo、python `3.14.0`、docker | ✓ 已就緒 |
-| VS Build Tools 2022（含 `VC.Tools.x86.x64`） | ✓ 已安裝 |
+| bun `1.3.14` | ✓ 已就緒（2026-08-15 實測 `bun --version`） |
+| node、rustup／cargo、python `3.14.0`、docker | ✓ 已就緒（2026-08-14 實測） |
+| VS Build Tools 2022（含 `VC.Tools.x86.x64`） | ✓ 已安裝（2026-08-14 實測） |
 | `node_modules/` | ✓ 已建立（`bun install` 成功） |
-| 原生 addon（`packages/natives/native/*.node`） | ✗ **未產出** |
-| `omp` 是否在 PATH | ✗ 未 link |
+| 原生 addon（`packages/natives/native/*.node`） | ✓ **已產出** —— `pi_natives.win32-x64-modern.node`（2026-08-15 確認檔案存在） |
+| `omp` 是否在 PATH | ✓ 已可用（2026-08-15 實測）—— `%USERPROFILE%\.bun\bin` 已加進持久化的 User PATH，PowerShell、cmd.exe、Git Bash 三者都回報 `omp/17.3.4` |
+| 獨立執行檔 | ✓ `bun run build` 跑得完，產出 `packages/coding-agent/dist/omp.exe`（約 154 MB，2026-08-15 實測） |
+| TypeScript 測試 | ✓ 跑得動（2026-08-15 實測，細節見 [`TESTING.md`](TESTING.md)） |
+| `cargo check` / Rust 建置 | ✗ **未確認** —— 2026-08-14 撞 `LNK1104: msvcrt.lib`，本次未重測 |
 | bazel / bazelisk | ✗ 未裝（Windows 用不到） |
 
-`bun setup` 跑到**第二步 `build:native` 失敗**，所以後面的 link 兩步沒執行。原因不是缺工具 —— VS Build Tools 有裝，是 `LIB`／`INCLUDE` 沒帶進 shell。修法見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。
+`bun setup` 的四個步驟在本機都已走完：原生 addon 在 `packages/natives/native/` 底下，`omp` 也已在 PATH 上。**本次只確認 addon 檔案存在，沒有重跑 `build:native`** —— 依 2026-08-14 的實測，在沒帶 `LIB`／`INCLUDE` 的 shell 裡重建會撞 `LNK1104`（本次未重驗），見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。
 
 ## 起步
 
@@ -367,13 +373,13 @@ logger.error("MCP request failed", { url, method });
 
 `timeout` 上限是 600 秒，完整的 `bun test` 塞不進去 —— 那個留給 CI。
 
-**Rust** —— `cargo check --workspace --all-targets` 在本機失敗：
+**Rust** —— `cargo check --workspace --all-targets` 在本機失敗（2026-08-14 實測，之後未再重測）：
 
 ```
 LINK : fatal error LNK1104: 無法開啟檔案 'msvcrt.lib'
 ```
 
-跟原生 addon 建置失敗是**同一個根因**：`LIB` 與 `INCLUDE` 為空。完整說明與兩種解法見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。
+跟當時原生 addon 建置失敗是**同一個根因**：`LIB` 與 `INCLUDE` 為空。完整說明與兩種解法見 [Windows：先把 MSVC 環境帶進來](#windows先把-msvc-環境帶進來)。原生 addon 現在已經產出，但**這不代表 `cargo check` 已經能跑** —— 在把 Rust 檢查加進閘門之前仍要自己實測一次。
 
 對閘門而言多一層限制：**hook 直接 spawn 命令、不經 shell**，所以它無法自己先 source `vcvars64.bat`。要納入 Rust 檢查，得讓 `LIB`／`INCLUDE` 在 Claude Code **啟動時**就已存在 —— 從 Developer PowerShell 啟動，或把兩者寫進 `.claude/settings.json` 的 `env`。確認 `cargo check --workspace --all-targets` 真的跑得完（冷編譯可能超過 600 秒上限）之後再加。
 

@@ -401,6 +401,6 @@ The script handles version bump, CHANGELOG finalization, commit, tag, publish, a
 
 ## 來源
 
-`package.json`、`bunfig.toml`、`rust-toolchain.toml`、`Cargo.toml`、`.spectra.yaml`、`scripts/ci-test-ts.ts`、`docs/`、`.claude/settings.json`、`.codex/hooks.json`、`.ai/bootstrap-ai-project/verify-gate.json`。環境探測：`Get-Command bun`（無結果）、`Test-Path node_modules`（False）、`cargo 1.99.0-nightly`、`Python 3.14.0`。
+`package.json`、`bunfig.toml`、`rust-toolchain.toml`、`Cargo.toml`、`.spectra.yaml`、`scripts/ci-test-ts.ts`、`docs/`、`.claude/settings.json`、`.codex/hooks.json`、`.ai/bootstrap-ai-project/verify-gate.json`。環境探測（2026-08-15）：`bun --version`（`1.3.14`）、`node_modules/` 已存在、原生 addon `pi_natives.win32-x64-modern.node` 已產出、`omp --version`（`omp/17.3.4`）。2026-08-14 量測、本次未重測：`cargo 1.99.0-nightly`、`Python 3.14.0`。
 
 <!-- bootstrap-ai-project:agents-conventions:end -->

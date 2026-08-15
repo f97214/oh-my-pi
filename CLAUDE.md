@@ -26,9 +26,9 @@ bun run build:native     # 改動 Rust crate 或 packages/natives 後必跑
 bun run lint / fmt / fix
 ```
 
-**本機現況**（2026-08-14）：bun `1.3.14`、node、cargo（nightly-2026-07-28）、python `3.14.0`、docker、VS Build Tools 2022 都已就緒，`node_modules/` 也已建立。
+**本機現況**（2026-08-15 實測）：`bun setup` 四步都已走完 —— `node_modules/` 已建立、原生 addon `packages/natives/native/pi_natives.win32-x64-modern.node` 已產出、`omp` 可在任意目錄執行（`%USERPROFILE%\.bun\bin` 已在持久化的 User PATH 上，PowerShell、cmd.exe、Git Bash 三者都回報 `omp/17.3.4`）。`bun run build` 也跑得完，產出 `packages/coding-agent/dist/omp.exe`（約 154 MB）；TypeScript 測試跑得動（`bun test` 對三個測試檔：147 pass／2 skip／3 fail，約 12 秒，失敗成因未查），`bun run --cwd packages/coding-agent check` 與 `bun run --cwd packages/browser-relay check` 皆 exit 0。node、cargo（nightly-2026-07-28）、python `3.14.0`、docker、VS Build Tools 2022 沿用 2026-08-14 的量測，本次未重測。
 
-但 `bun setup` **卡在第二步**：`bun run build:native` 失敗，所以 `packages/natives/native/` 底下沒有 `.node` addon，`omp` 也沒進 PATH。原因是 `LIB`／`INCLUDE` 為空（工具有裝，只是環境變數沒帶進 shell），與 `cargo check` 撞的 `LNK1104: msvcrt.lib` 同源。修法見 `docs/DEVELOPMENT.md` 的「Windows：先把 MSVC 環境帶進來」。
+**仍未確認**：`cargo check` 與 Rust 建置自 2026-08-14 起沒再實測過 —— 當時撞 `LNK1104: msvcrt.lib`，原因是 `LIB`／`INCLUDE` 為空（工具有裝，只是環境變數沒帶進 shell）。原生 addon 已產出**不等於**這個問題已解決。修法見 `docs/DEVELOPMENT.md` 的「Windows：先把 MSVC 環境帶進來」。
 
 ## Claude Code 專屬規則
 
@@ -79,4 +79,5 @@ bun run lint / fmt / fix
 - `README.md`、`docs/`（82 個項目）
 - `.spectra.yaml`、`.claude/settings.json`、`.codex/hooks.json`、`.ai/bootstrap-ai-project/verify-gate.json`
 - `scripts/ci-test-ts.ts`（測試拓樸與分桶理由）
-- 環境探測：`Get-Command bun`（無結果）、`Test-Path node_modules`（False）、`cargo 1.99.0-nightly`、`Python 3.14.0`
+- 環境探測（2026-08-15）：`bun --version`（`1.3.14`）、`node_modules/` 已存在、`packages/natives/native/pi_natives.win32-x64-modern.node` 已存在、`packages/coding-agent/dist/omp.exe` 已產出、`omp --version`（`omp/17.3.4`，PowerShell／cmd.exe／Git Bash 三者）
+- 環境探測（2026-08-14，本次未重測）：`cargo 1.99.0-nightly`、`Python 3.14.0`
