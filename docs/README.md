@@ -1,10 +1,16 @@
 # 文件索引
 
-`docs/` 目前有 82 個項目（78 份 markdown 加 `skills/`、`tools/`、`toolconv/` 三個子目錄）。本索引依主題分組，讓人與 agent 都能先定位再展開。
+`docs/` 目前有 89 個項目（84 份 markdown、1 份 HTML，加 `skills/`、`tools/`、`toolconv/`、`zh-TW/` 四個子目錄）。本索引依主題分組，讓人與 agent 都能先定位再展開。
 
 專案門面與功能敘述在根目錄 [`README.md`](../README.md)；跨 AI 工具的協作規範在 [`AGENTS.md`](../AGENTS.md)。
 
 來源：`docs/` 目錄列表。
+
+## 使用教學（先看這份）
+
+[`GUIDE.html`](GUIDE.html) —— 給**使用 omp 的人**的繁體中文上手教學：接上模型、第一個 session、核心工作流、核准模式、plan mode、session 管理、模型角色、slash 命令與快捷鍵速查、疑難排解。單一自足 HTML，離線可讀，用瀏覽器開。
+
+這是原創內容不是翻譯，所以放在 `docs/` 根層而非 `zh-TW/`。指令與 flag 取自 `omp --help` 實際輸出，slash 命令逐一對照過原始碼。
 
 ## 繁體中文翻譯
 
