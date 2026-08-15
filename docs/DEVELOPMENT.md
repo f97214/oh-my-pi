@@ -90,9 +90,50 @@ bun setup
 | 1 | `bun install` | 安裝 workspace 相依，建立 `node_modules/` |
 | 2 | `bun run build:native` | 建置 `@oh-my-pi/pi-natives` 原生 addon |
 | 3 | `bun --cwd=packages/coding-agent link` | 把套件註冊到 Bun 的 global link registry |
-| 4 | `sh scripts/link-omp.sh` | 把 `packages/coding-agent/scripts/omp` 這支 wrapper 裝進 Bun 的 global bin |
+| 4 | `sh scripts/link-omp.sh` | 把開發用的啟動器裝進 Bun 的 global bin —— POSIX 上是 `packages/coding-agent/scripts/omp`，Windows 上額外裝 `omp.cmd` |
 
-第 4 步刻意**取代** `bun link` 預設建的 symlink —— 那個 symlink 直接指向 `src/cli.ts`，會踩到 bunfig.toml 的 preload bug（理由見該 wrapper 的檔頭註解與 issue #3701）。走完之後，直接打 `omp` 就是這份原始碼。
+第 4 步刻意**取代** `bun link` 預設建的入口 —— 它直接指向 `src/cli.ts`，會踩到 bunfig.toml 的 preload bug（理由見該 wrapper 的檔頭註解與 issue #3701）。走完之後，直接打 `omp` 就是這份原始碼。
+
+**Windows 有兩個額外環節**，因為 PowerShell 與 cmd.exe 執行不了無副檔名的 sh 腳本：
+
+- 第 4 步會多裝一支 `omp.cmd`（Git Bash 仍走無副檔名的那支），並移除 `bun link` 留下的 `omp.exe` 與 `omp.bunx` —— PATHEXT 讓 `.EXE` 早於 `.CMD`，留著會讓 `omp` 解析回那支繞過防護的 shim。
+- **Bun 的 global bin 不一定在 PATH 上**（用 npm 裝 bun 時通常就不在）。第 4 步偵測到這種情況會印出要加入的完整路徑，但**不會**替你修改 PATH —— 改寫持久化環境變數是這整個流程裡唯一有機會弄壞你環境的操作，所以留給你決定。加法見下一節；沒加之前 `omp` 仍然找不到，可以先用 `bun dev`。
+
+### Windows：把 omp 加進 PATH
+
+一般權限的 PowerShell 就夠，不需要系統管理員：
+
+```powershell
+# 1) 先備份目前的 User PATH
+$backup = "$env:USERPROFILE\Desktop\user-path-backup.txt"
+[Environment]::GetEnvironmentVariable('PATH','User') | Set-Content -Encoding UTF8 $backup
+Write-Host "已備份到 $backup"
+
+# 2) 只在尚未存在時追加
+$bunBin = "$env:USERPROFILE\.bun\bin"
+$p = [Environment]::GetEnvironmentVariable('PATH','User')
+if ($p -split ';' -contains $bunBin) {
+	Write-Host "已經在 PATH 裡，不用動"
+} else {
+	[Environment]::SetEnvironmentVariable('PATH', ($p.TrimEnd(';') + ';' + $bunBin), 'User')
+	Write-Host "已加入 $bunBin"
+}
+```
+
+三個防呆各擋一種真實失敗：**先備份**（PATH 被截斷很難事後還原）、**先查重**（反覆執行不會把 PATH 撐爆）、**只寫 User 不寫 Machine**（不需提權，也不影響其他使用者）。出事就把備份檔的內容貼回去。
+
+偏好 GUI 的話：`Win+R` 輸入 `rundll32 sysdm.cpl,EditEnvironmentVariables`，在上半部「使用者變數」編輯 `Path`。
+
+**驗證必須開新的終端機** —— 既有視窗拿的是舊 PATH，不會自己更新。這是最常見的「我加了但沒用」：
+
+```powershell
+Get-Command omp -All   # 第一筆應該是 ...\.bun\bin\omp.cmd
+omp --version
+```
+
+用 `Get-Command` 而不是 `where.exe`：後者按字面檔名列出所有相符檔案，會把無副檔名的 `omp`（給 Git Bash 用的那支）排在前面，看起來像出了問題；`Get-Command` 反映的才是 PowerShell 真正的解析順序。
+
+若第一筆是 `omp.exe`，表示有人跑了 `bun link` 卻沒接著跑 `sh scripts/link-omp.sh`。PATHEXT 讓 `.EXE` 早於 `.CMD`，那支 shim 會遮蔽正確的入口並繞過 preload 防護 —— 重跑第 4 步即可清掉。
 
 ## 執行
 
