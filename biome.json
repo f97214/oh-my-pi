@@ -69,5 +69,31 @@
 			"!.wt/**/*"
 		]
 	},
-	"assist": { "actions": { "source": { "organizeImports": "on" } } }
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"overrides": [
+		{
+			"includes": [
+				"packages/coding-agent/src/utils/zip-writer.ts",
+				"packages/coding-agent/src/tools/tool-errors.ts",
+				"packages/browser-relay/scripts/build-extension.ts"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": ["@oh-my-pi/*", "@oh-my-pi/**"],
+										"message": "This file is in the import graph of packages/browser-relay/scripts/build-extension.ts, which CI runs with no `bun install` (.github/workflows/ci.yml, job release_github). Only node:*, Bun globals, and relative paths resolve there."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		}
+	]
 }

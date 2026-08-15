@@ -1,17 +1,44 @@
-// The single archive boundary for the codebase: ZIP (framed here, over the raw
-// DEFLATE codec in `node:zlib`) and tar / tar.gz (parsed in-process here, gzip
-// via `node:zlib`; only archive *writing* uses `Bun.Archive`). This is the ONLY
-// module that frames ZIP containers, parses tar, or touches `Bun.Archive`; the
+// The single archive boundary for the codebase: ZIP (read here, written in
+// `./zip-writer`, both over the raw DEFLATE codec in `node:zlib`) and tar /
+// tar.gz (parsed in-process here, gzip via `node:zlib`; only archive *writing*
+// uses `Bun.Archive`). This module and its `./zip-writer` half are the ONLY
+// places that frame ZIP containers, parse tar, or touch `Bun.Archive`; the
 // markit document converters, the read/search/write tools, the URL fetcher, the
 // debug report bundler, and the tool-binary installer all go through here so
 // there is exactly one archive implementation to reason about. Do not parse or
-// build ZIP/tar, or call `Bun.Archive`, anywhere else. Tar *reads* deliberately
-// avoid libarchive: its internal allocation-failure path aborts the whole
-// process (#4774).
+// build ZIP/tar, or call `Bun.Archive`, anywhere else — import from here
+// (`zip` is re-exported); `./zip-writer` is imported directly only by build
+// scripts that must run without `bun install`. Tar *reads* deliberately avoid
+// libarchive: its internal allocation-failure path aborts the whole process
+// (#4774).
 import * as path from "node:path";
 import * as zlib from "node:zlib";
 import { formatBytes } from "@oh-my-pi/pi-utils";
 import { ToolError } from "../tools/tool-errors";
+import {
+	ZIP_CENTRAL_DIRECTORY_HEADER_SIGNATURE,
+	ZIP_DATA_DESCRIPTOR_SIGNATURE,
+	ZIP_DEFLATE_COMPRESSION,
+	ZIP_ENCRYPTED_FLAG,
+	ZIP_EOCD_MAX_COMMENT_LENGTH,
+	ZIP_EOCD_MIN_LENGTH,
+	ZIP_EOCD_SIGNATURE,
+	ZIP_LOCAL_FILE_HEADER_SIGNATURE,
+	ZIP_STORED_COMPRESSION,
+	ZIP_UINT16_MAX,
+	ZIP_UINT32_MAX,
+	ZIP_UINT32_RANGE,
+	ZIP_UTF8_FLAG,
+	ZIP64_EOCD_LOCATOR_LENGTH,
+	ZIP64_EOCD_LOCATOR_SIGNATURE,
+	ZIP64_EOCD_SIGNATURE,
+	zip,
+} from "./zip-writer";
+
+// `./zip` stays the one public entry point for archive work: `zip` is
+// re-exported so no caller has to know the writer lives in a separate file
+// (it is split out only so a node_modules-free build script can import it).
+export { zip };
 
 /** A ZIP archive decoded to a `path → bytes` map of its file members. */
 export type Unzipped = Record<string, Uint8Array>;
@@ -299,23 +326,6 @@ export function formatArchiveEntryLines(entries: readonly ArchiveDirectoryEntry[
 		return `${entry.name}${sizeSuffix}`;
 	});
 }
-
-const ZIP_LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
-const ZIP_CENTRAL_DIRECTORY_HEADER_SIGNATURE = 0x02014b50;
-const ZIP64_EOCD_SIGNATURE = 0x06064b50;
-const ZIP64_EOCD_LOCATOR_SIGNATURE = 0x07064b50;
-const ZIP_EOCD_SIGNATURE = 0x06054b50;
-const ZIP_DATA_DESCRIPTOR_SIGNATURE = 0x08074b50;
-const ZIP_EOCD_MIN_LENGTH = 22;
-const ZIP_EOCD_MAX_COMMENT_LENGTH = 0xffff;
-const ZIP64_EOCD_LOCATOR_LENGTH = 20;
-const ZIP_STORED_COMPRESSION = 0;
-const ZIP_DEFLATE_COMPRESSION = 8;
-const ZIP_UTF8_FLAG = 0x0800;
-const ZIP_ENCRYPTED_FLAG = 0x0001;
-const ZIP_UINT16_MAX = 0xffff;
-const ZIP_UINT32_MAX = 0xffffffff;
-const ZIP_UINT32_RANGE = 0x100000000;
 
 interface ZipCentralDirectoryInfo {
 	entries: number;
@@ -1687,109 +1697,6 @@ export async function extractArchive(source: ArchiveSource, destDir: string): Pr
 		count++;
 	}
 	return count;
-}
-
-function writeUInt16LE(buf: Uint8Array, offset: number, value: number): void {
-	buf[offset] = value & 0xff;
-	buf[offset + 1] = (value >>> 8) & 0xff;
-}
-
-function writeUInt32LE(buf: Uint8Array, offset: number, value: number): void {
-	buf[offset] = value & 0xff;
-	buf[offset + 1] = (value >>> 8) & 0xff;
-	buf[offset + 2] = (value >>> 16) & 0xff;
-	buf[offset + 3] = (value >>> 24) & 0xff;
-}
-
-/**
- * Frame a `path → bytes` map into a ZIP archive in memory. Each member is raw
- * DEFLATE unless that would not shrink it, in which case it is stored. ZIP64 is
- * not emitted; archives beyond the 32-bit limits throw rather than corrupt.
- */
-export function zip(entries: Unzipped): Uint8Array {
-	const localParts: Uint8Array[] = [];
-	const centralParts: Uint8Array[] = [];
-	let offset = 0;
-	let count = 0;
-
-	for (const name in entries) {
-		const data = entries[name]!;
-		const nameBytes = ENCODER.encode(name);
-		const crc = zlib.crc32(data) >>> 0;
-		const uncompressedSize = data.byteLength;
-		const deflated = zlib.deflateRawSync(data);
-		const stored = deflated.byteLength >= uncompressedSize;
-		const method = stored ? ZIP_STORED_COMPRESSION : ZIP_DEFLATE_COMPRESSION;
-		const payload = stored ? data : deflated;
-
-		// Without ZIP64 the name length is a u16 and offsets/sizes are u32 (with
-		// 0xffff/0xffffffff reserved as ZIP64 sentinels); reject anything that
-		// would silently wrap a header field instead of producing a valid archive.
-		if (
-			count + 1 >= ZIP_UINT16_MAX ||
-			nameBytes.byteLength > ZIP_UINT16_MAX ||
-			uncompressedSize >= ZIP_UINT32_MAX ||
-			offset + 30 + nameBytes.byteLength + payload.byteLength >= ZIP_UINT32_MAX
-		) {
-			throw new ToolError("ZIP archive is too large to write (ZIP64 is not supported)");
-		}
-
-		const header = new Uint8Array(30 + nameBytes.byteLength);
-		writeUInt32LE(header, 0, ZIP_LOCAL_FILE_HEADER_SIGNATURE);
-		writeUInt16LE(header, 4, 20);
-		writeUInt16LE(header, 6, ZIP_UTF8_FLAG);
-		writeUInt16LE(header, 8, method);
-		// Fixed 1980-01-01 timestamp keeps the output deterministic.
-		writeUInt16LE(header, 12, 0x21);
-		writeUInt32LE(header, 14, crc);
-		writeUInt32LE(header, 18, payload.byteLength);
-		writeUInt32LE(header, 22, uncompressedSize);
-		writeUInt16LE(header, 26, nameBytes.byteLength);
-		header.set(nameBytes, 30);
-		localParts.push(header, payload);
-
-		const record = new Uint8Array(46 + nameBytes.byteLength);
-		writeUInt32LE(record, 0, ZIP_CENTRAL_DIRECTORY_HEADER_SIGNATURE);
-		writeUInt16LE(record, 4, 20);
-		writeUInt16LE(record, 6, 20);
-		writeUInt16LE(record, 8, ZIP_UTF8_FLAG);
-		writeUInt16LE(record, 10, method);
-		writeUInt16LE(record, 14, 0x21);
-		writeUInt32LE(record, 16, crc);
-		writeUInt32LE(record, 20, payload.byteLength);
-		writeUInt32LE(record, 24, uncompressedSize);
-		writeUInt16LE(record, 28, nameBytes.byteLength);
-		writeUInt32LE(record, 42, offset);
-		record.set(nameBytes, 46);
-		centralParts.push(record);
-
-		offset += header.byteLength + payload.byteLength;
-		count++;
-	}
-
-	const centralSize = centralParts.reduce((sum, part) => sum + part.byteLength, 0);
-	if (centralSize >= ZIP_UINT32_MAX || offset + centralSize + ZIP_EOCD_MIN_LENGTH >= ZIP_UINT32_MAX) {
-		throw new ToolError("ZIP archive is too large to write (ZIP64 is not supported)");
-	}
-	const eocd = new Uint8Array(ZIP_EOCD_MIN_LENGTH);
-	writeUInt32LE(eocd, 0, ZIP_EOCD_SIGNATURE);
-	writeUInt16LE(eocd, 8, count);
-	writeUInt16LE(eocd, 10, count);
-	writeUInt32LE(eocd, 12, centralSize);
-	writeUInt32LE(eocd, 16, offset);
-
-	const out = new Uint8Array(offset + centralSize + ZIP_EOCD_MIN_LENGTH);
-	let pos = 0;
-	for (const part of localParts) {
-		out.set(part, pos);
-		pos += part.byteLength;
-	}
-	for (const part of centralParts) {
-		out.set(part, pos);
-		pos += part.byteLength;
-	}
-	out.set(eocd, pos);
-	return out;
 }
 
 function readZip64CentralDirectoryInfoSync(bytes: Uint8Array, eocdOffset: number): ZipCentralDirectoryInfo | undefined {
