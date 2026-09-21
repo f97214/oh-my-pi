@@ -21,15 +21,6 @@ export const lspSchema = type({
 	payload: "string?",
 });
 
-export type LspParams = typeof lspSchema.infer;
-
-export interface LspToolDetails {
-	serverName?: string;
-	action: string;
-	success: boolean;
-	request?: LspParams;
-}
-
 // =============================================================================
 // Core LSP Protocol Types
 // =============================================================================
@@ -315,7 +306,7 @@ export interface LinterClient {
 	format(filePath: string, content: string): Promise<string>;
 
 	/** Get diagnostics for a file. Content should already be written to disk. */
-	lint(filePath: string): Promise<Diagnostic[]>;
+	lint(filePath: string, signal?: AbortSignal): Promise<Diagnostic[]>;
 
 	/** Dispose of any resources (e.g., LSP connection) */
 	dispose?(): void;
@@ -404,6 +395,12 @@ export interface LspTransport {
 export interface OpenFile {
 	version: number;
 	languageId: string;
+	/**
+	 * Hash of the document text last sent to the server, used to detect external
+	 * disk edits. Absent means the last-synced text is unknown, so the next
+	 * reconcile treats the document as dirty and resyncs from disk.
+	 */
+	syncedHash?: number | bigint;
 }
 
 export interface PendingRequest {

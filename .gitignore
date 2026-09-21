@@ -113,3 +113,5 @@ __pycache__/
 
 # Per-developer overrides; settings.json is the shared one.
 .claude/settings.local.json
+
+.parity/
