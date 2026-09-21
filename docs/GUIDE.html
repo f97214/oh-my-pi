@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>omp 使用教學（繁體中文）</title>
+<style>
+:root {
+	--bg: #ffffff;
+	--fg: #1a1d21;
+	--muted: #5b6570;
+	--line: #dfe3e8;
+	--code-bg: #f4f6f8;
+	--accent: #0b6bcb;
+	--warn-bg: #fff8e6;
+	--warn-line: #e6b800;
+	--note-bg: #eef5fd;
+	--note-line: #6aa9e0;
+	--sidebar-bg: #fafbfc;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #14171a;
+		--fg: #e4e7ea;
+		--muted: #9aa4ae;
+		--line: #2b3138;
+		--code-bg: #1c2126;
+		--accent: #6ab0f3;
+		--warn-bg: #2a2410;
+		--warn-line: #a88700;
+		--note-bg: #14232f;
+		--note-line: #3d6f9e;
+		--sidebar-bg: #101316;
+	}
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Segoe UI", system-ui, sans-serif;
+	font-size: 16px;
+	line-height: 1.75;
+}
+.layout { display: flex; align-items: flex-start; max-width: 1240px; margin: 0 auto; }
+nav {
+	position: sticky; top: 0; flex: 0 0 250px; height: 100vh; overflow-y: auto;
+	padding: 28px 16px 40px 20px; background: var(--sidebar-bg);
+	border-right: 1px solid var(--line); font-size: 14px;
+}
+nav .brand { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+nav .ver { color: var(--muted); font-size: 12px; margin-bottom: 18px; }
+nav a { display: block; padding: 4px 8px; color: var(--muted); text-decoration: none; border-radius: 5px; }
+nav a:hover { color: var(--fg); background: var(--code-bg); }
+nav a.active { color: var(--accent); background: var(--code-bg); font-weight: 600; }
+main { flex: 1 1 auto; min-width: 0; padding: 28px 40px 120px; }
+h1 { font-size: 30px; line-height: 1.35; margin: 0 0 6px; }
+h2 { font-size: 23px; margin: 52px 0 14px; padding-bottom: 7px; border-bottom: 1px solid var(--line); scroll-margin-top: 16px; }
+h3 { font-size: 18px; margin: 30px 0 10px; scroll-margin-top: 16px; }
+p, li { color: var(--fg); }
+a { color: var(--accent); }
+code {
+	font-family: "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+	font-size: 0.89em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px;
+	word-break: break-word;
+}
+pre {
+	background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+	padding: 13px 15px; overflow-x: auto; line-height: 1.6;
+}
+pre code { background: none; padding: 0; font-size: 13.5px; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14.5px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+th { background: var(--code-bg); font-weight: 600; white-space: nowrap; }
+blockquote { margin: 16px 0; padding: 12px 16px; border-left: 4px solid var(--note-line); background: var(--note-bg); border-radius: 0 6px 6px 0; }
+blockquote p { margin: 0; }
+.warn { margin: 16px 0; padding: 12px 16px; border-left: 4px solid var(--warn-line); background: var(--warn-bg); border-radius: 0 6px 6px 0; }
+.warn p { margin: 0; }
+.lead { color: var(--muted); font-size: 17px; margin-bottom: 28px; }
+.meta { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); margin-top: 60px; padding-top: 16px; }
+kbd {
+	font-family: inherit; font-size: 0.84em; background: var(--code-bg);
+	border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; white-space: nowrap;
+}
+@media (max-width: 900px) {
+	.layout { display: block; }
+	nav { position: static; height: auto; width: auto; flex: none; border-right: none; border-bottom: 1px solid var(--line); }
+	main { padding: 20px 18px 80px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+	<div class="brand">omp 使用教學</div>
+	<div class="ver">依 omp v17.3.4 撰寫</div>
+	<a href="#intro">1. 開始之前</a>
+	<a href="#install">2. 確認裝好了</a>
+	<a href="#model">3. 接上模型</a>
+	<a href="#first">4. 第一個 session</a>
+	<a href="#workflow">5. 核心工作流</a>
+	<a href="#approval">6. 核准與安全</a>
+	<a href="#plan">7. Plan mode 與省錢</a>
+	<a href="#session">8. Session 管理</a>
+	<a href="#roles">9. 模型與角色</a>
+	<a href="#slash">10. Slash 命令速查</a>
+	<a href="#keys">11. 快捷鍵</a>
+	<a href="#next">12. 再往下走</a>
+	<a href="#trouble">13. 卡住的時候</a>
+</nav>
+<main>
+
+<h1>omp 使用教學</h1>
+<p class="lead">從裝好到用得順手。這份文件是原創教學，不是上游文件的翻譯。</p>
+
+<h2 id="intro">1. 開始之前</h2>
+
+<p><strong>omp</strong> 是一個在終端機裡跑的 coding agent：你用自然語言交代事情，它讀你的程式碼、改檔案、跑指令，並在動手前依設定徵求你同意。</p>
+
+<p>這份教學假設你<strong>已經把 omp 裝好了</strong>，目標是讓你從「能開起來」到「用得順手」。</p>
+
+<h3>這裡不會涵蓋的</h3>
+
+<table>
+<tr><th>主題</th><th>去哪裡看</th></tr>
+<tr><td>31 個工具的逐項參數</td><td><a href="https://omp.sh/docs/tools">omp.sh/docs/tools</a></td></tr>
+<tr><td>60+ 供應商的完整設定</td><td><a href="providers.md">docs/providers.md</a>、<a href="zh-TW/providers.md">中文版</a></td></tr>
+<tr><td>設定鍵的完整清單</td><td><a href="settings.md">docs/settings.md</a>、<a href="config-usage.md">config-usage.md</a></td></tr>
+<tr><td>開發／貢獻這個 repo</td><td><a href="DEVELOPMENT.md">docs/DEVELOPMENT.md</a></td></tr>
+</table>
+
+<blockquote><p><strong>版本落差怎麼辦。</strong>本文依 <code>omp v17.3.4</code> 撰寫。omp 更新很快，發現內容跟你的實際行為對不上時，以 <code>omp --help</code> 與 <code>/help</code> 的即時輸出為準 —— 那兩個是從程式本身產生的，不會過期。</p></blockquote>
+
+<h2 id="install">2. 確認裝好了</h2>
+
+<p>開一個終端機，隨便一個目錄，打：</p>
+
+<pre><code>omp --version</code></pre>
+
+<p>印出版本號就代表沒問題，可以直接跳到下一節。</p>
+
+<h3>如果顯示「找不到命令」</h3>
+
+<p>代表 omp 的執行檔不在你的 <code>PATH</code> 上。這在 Windows 上特別常見 —— 用 npm 裝 bun 的話，Bun 的 global bin 目錄通常不會自動進 PATH。</p>
+
+<p>Windows 的完整處理步驟（含備份與驗證）寫在 <a href="DEVELOPMENT.md#windows把-omp-加進-path">DEVELOPMENT.md 的「Windows：把 omp 加進 PATH」</a>，這裡不重複。</p>
+
+<div class="warn"><p><strong>改完 PATH 一定要開新的終端機視窗。</strong>既有的視窗抓的是舊 PATH，不會自己更新。這是最常見的「我加了但沒用」。</p></div>
+
+<h2 id="model">3. 接上模型</h2>
+
+<p>omp 自己不含模型，你得先接上一個供應商。最省事的是引導式設定：</p>
+
+<pre><code>omp setup</code></pre>
+
+<p>它會帶你選供應商、完成登入、設定預設模型。已經在 session 裡的話，用 <code>/setup</code> 開同一個流程。</p>
+
+<h3>OAuth 登入</h3>
+
+<p>Anthropic、OpenAI Codex、GitHub Copilot、Cursor 等支援用帳號登入而不是貼 API key：</p>
+
+<pre><code>/login</code></pre>
+
+<p>對應的 <code>/logout</code> 登出。訂閱制的 coding plan（Kimi Code、Z.AI／GLM、MiniMax 等）也走這條路。</p>
+
+<h3>用 API key</h3>
+
+<p>多數供應商認環境變數，例如 <code>ANTHROPIC_API_KEY</code>、<code>OPENAI_API_KEY</code>。也可以單次指定：</p>
+
+<pre><code>omp --api-key sk-... --model gpt-5.2</code></pre>
+
+<h3>選模型：模糊比對</h3>
+
+<p><code>--model</code> 不必寫全名，三種寫法都行：</p>
+
+<pre><code>omp --model opus              # 模糊比對
+omp --model gpt-5.2           # 指定型號
+omp --model openai/gpt-5.2    # 供應商/型號，最明確</code></pre>
+
+<p>想知道有哪些可選：</p>
+
+<pre><code>omp models</code></pre>
+
+<h3>設成預設</h3>
+
+<p>不想每次都打 <code>--model</code>，就寫進 <code>~/.omp/agent/config.yml</code>：</p>
+
+<pre><code>modelRoles:
+  default: anthropic/claude-sonnet-4.5</code></pre>
+
+<p><code>default</code> 只是十個角色之一，其他角色見<a href="#roles">第 9 節</a>。</p>
+
+<h2 id="first">4. 第一個 session</h2>
+
+<p><strong>先 <code>cd</code> 到你要處理的專案目錄</strong>，再開 omp。它會把當下目錄當成工作區根目錄：</p>
+
+<pre><code>cd D:/我的專案
+omp</code></pre>
+
+<p>也可以開場就給指令：</p>
+
+<pre><code>omp "把 src/ 底下所有 .ts 檔列出來"</code></pre>
+
+<h3>帶檔案進對話</h3>
+
+<p><code>@</code> 開頭的參數會被當成檔案讀進去，圖片也可以：</p>
+
+<pre><code>omp @prompt.md @screenshot.png "照這份規格實作，UI 參考截圖"</code></pre>
+
+<p>session 進行中一樣可以在訊息裡用 <code>@</code> 引用檔案。</p>
+
+<h3>一次性使用</h3>
+
+<p>只想問一件事、拿到答案就結束，不進互動介面：</p>
+
+<pre><code>omp -p "這個 repo 的進入點在哪個檔案？"</code></pre>
+
+<p><code>-p</code> 是 <code>--print</code>，處理完就退出，適合寫進腳本。</p>
+
+<h3>中斷與退出</h3>
+
+<table>
+<tr><th>動作</th><th>怎麼做</th></tr>
+<tr><td>中斷正在跑的回合</td><td><kbd>Esc</kbd></td></tr>
+<tr><td>退出</td><td><code>/exit</code> 或 <code>/quit</code></td></tr>
+<tr><td>看有哪些命令</td><td><code>/help</code></td></tr>
+<tr><td>看所有快捷鍵</td><td><code>/hotkeys</code></td></tr>
+</table>
+
+<h2 id="workflow">5. 核心工作流</h2>
+
+<p>實際用起來就是一段對話。你交代目標，它會自己決定要讀哪些檔、跑什麼指令、改哪裡。</p>
+
+<h3>它會做的事</h3>
+
+<table>
+<tr><th>類別</th><th>能力</th></tr>
+<tr><td>讀</td><td>檔案、目錄、壓縮檔、SQLite、PDF、notebook、網址，甚至 <code>ssh://</code> 遠端路徑</td></tr>
+<tr><td>找</td><td>正規表達式搜尋、glob、結構化的 AST 查詢（支援 50+ 種語言文法）</td></tr>
+<tr><td>改</td><td>建檔、覆寫、以內容錨點做精準修補、結構化改寫</td></tr>
+<tr><td>跑</td><td>工作區 shell、持久的 Python 與 JavaScript cell</td></tr>
+<tr><td>查</td><td>LSP 診斷與導覽、DAP 除錯器、網頁搜尋</td></tr>
+</table>
+
+<h3>為什麼它改檔比較不會出錯</h3>
+
+<p>omp 的 <code>edit</code> 工具用<strong>內容雜湊當錨點</strong>，模型指出要改的位置而不是重貼整段程式碼。好處對你來說有兩個：改動更省 token，而且<strong>檔案在它讀完之後被改動過的話，錨點對不上，修補會被拒絕而不是覆蓋掉你的變更</strong>。</p>
+
+<h3>幾個實用習慣</h3>
+
+<ul>
+<li><strong>目標講清楚，過程讓它決定。</strong>「把這個函式的錯誤處理補上，失敗時回傳結構化錯誤而不是 throw」比「改一下這裡」有效得多。</li>
+<li><strong>大工程先讓它規劃</strong>，見<a href="#plan">第 7 節</a>。</li>
+<li><strong>context 快滿了就 <code>/compact</code></strong>，或用 <code>/shake</code> 把工具輸出等大塊內容丟掉。<code>/context</code> 可以看目前用量分布。</li>
+<li><strong>跑歪了就 <code>/clear</code></strong> 清掉對話但保留 session，重新交代一次通常比一直拉回來快。</li>
+</ul>
+
+<h2 id="approval">6. 核准與安全</h2>
+
+<p>omp 會改你的檔案、跑你的指令。核准模式決定它動手前問不問你。</p>
+
+<table>
+<tr><th>模式</th><th>行為</th><th>適合</th></tr>
+<tr><td><code>always-ask</code></td><td>每個工具呼叫都問</td><td>剛上手、或在不熟的專案</td></tr>
+<tr><td><code>write</code></td><td>只有會寫入的操作要核准，讀取類直接放行</td><td>日常</td></tr>
+<tr><td><code>yolo</code></td><td>全部自動放行</td><td>拋棄式環境、容器內</td></tr>
+</table>
+
+<p>單次指定：</p>
+
+<pre><code>omp --approval-mode write</code></pre>
+
+<p>要持久設定就寫進設定檔的 <code>tools.approvalMode</code>。另有 <code>--auto-approve</code> 等同於全部放行。</p>
+
+<div class="warn"><p><strong>在你真正在乎的 repo 裡不要用 <code>yolo</code>。</strong>它會讓 agent 在沒有任何確認的情況下刪檔、跑破壞性指令。要放手跑，先確定<strong>工作目錄已經 commit 過</strong>，出事才回得來。</p></div>
+
+<p>更完整的機制（三個輸入來源、安全覆寫、子代理的處理）見 <a href="approval-mode.md">approval-mode.md</a> 或<a href="zh-TW/approval-mode.md">中文版</a>。</p>
+
+<h2 id="plan">7. Plan mode 與省錢</h2>
+
+<h3>先計畫再動手</h3>
+
+<p>Plan mode 讓 agent <strong>只能讀、不能寫</strong>，先產出一份計畫給你看。改動大、或你還不確定要怎麼做的時候特別值得。</p>
+
+<p>用 <kbd>Alt+Shift+P</kbd> 切換，或啟動時指定計畫用的模型：</p>
+
+<pre><code>omp --plan opus</code></pre>
+
+<p>計畫出來後可以用 <code>/plan-review</code> 重新打開檢視。</p>
+
+<h3>用便宜模型做粗活</h3>
+
+<p>典型的花費結構是：<strong>想清楚要做什麼</strong>很貴，<strong>照著做</strong>其實不用那麼貴。omp 有兩個機制利用這件事：</p>
+
+<table>
+<tr><th>機制</th><th>做什麼</th></tr>
+<tr><td><code>--prewalk</code></td><td>計畫的待辦清單成形後，在第一次寫入時自動切換到快而便宜的模型。session 內用 <code>/prewalk</code> 也能觸發</td></tr>
+<tr><td><code>--plan-yolo</code></td><td>開場強制唯讀計畫模式，模型第一次確認計畫時自動核准，然後切到 <code>--plan-yolo-into</code> 指定的模型去實作</td></tr>
+</table>
+
+<pre><code>omp --plan-yolo --plan-yolo-into smol</code></pre>
+
+<h2 id="session">8. Session 管理</h2>
+
+<p>對話預設會存下來，可以隨時回去。</p>
+
+<table>
+<tr><th>需求</th><th>指令</th></tr>
+<tr><td>接續上一個 session</td><td><code>omp -c</code> 或 <code>omp --continue</code></td></tr>
+<tr><td>挑一個舊的接續</td><td><code>omp -r</code>（不帶參數會開選擇器）</td></tr>
+<tr><td>這次不要存</td><td><code>omp --no-session</code></td></tr>
+<tr><td>從 Claude Code 匯入</td><td><code>omp --from-claude</code></td></tr>
+<tr><td>從 Codex 匯入</td><td><code>omp --from-codex</code></td></tr>
+</table>
+
+<h3>分支與樹狀導覽</h3>
+
+<p>session 不是一條線。你可以從中間某則訊息岔出去試別的做法：</p>
+
+<table>
+<tr><th>命令</th><th>作用</th></tr>
+<tr><td><code>/branch</code></td><td>從某則舊訊息開新分支</td></tr>
+<tr><td><code>/fork</code></td><td>從某則舊訊息分叉出新 session</td></tr>
+<tr><td><code>/tree</code></td><td>瀏覽整棵樹、切換分支</td></tr>
+<tr><td><code>/handoff</code></td><td>把目前脈絡交接給一個新 session</td></tr>
+</table>
+
+<h3>匯出與分享</h3>
+
+<table>
+<tr><th>命令</th><th>作用</th></tr>
+<tr><td><code>/export</code></td><td>把 session 匯出成 HTML 檔（純本機）</td></tr>
+<tr><td><code>/share</code></td><td>產生加密連結分享<strong>已結束</strong>的對話</td></tr>
+<tr><td><code>/collab</code></td><td>把<strong>正在進行</strong>的 session 放上 relay，別人可即時參與</td></tr>
+<tr><td><code>/view</code></td><td>collab 的唯讀版：能看不能下指令</td></tr>
+</table>
+
+<p><code>/share</code> 與 <code>/collab</code> 的差別在時態：前者是分享成果，後者是找人一起跑。指令列也有對應的 <code>omp share</code> 與 <code>omp join</code>。</p>
+
+<h2 id="roles">9. 模型與角色</h2>
+
+<p>omp 不是只用一個模型，而是<strong>依用途分配</strong>。角色有十個，常用的是這幾個：</p>
+
+<table>
+<tr><th>角色</th><th>用在</th></tr>
+<tr><td><code>default</code></td><td>一般對話</td></tr>
+<tr><td><code>smol</code></td><td>便宜的粗活、子代理 fan-out</td></tr>
+<tr><td><code>slow</code></td><td>需要深度推理的分析</td></tr>
+<tr><td><code>plan</code></td><td>plan mode</td></tr>
+<tr><td><code>commit</code></td><td>產生 commit 訊息與變更紀錄</td></tr>
+</table>
+
+<p>啟動時覆寫：</p>
+
+<pre><code>omp --model opus --smol haiku --slow gpt-5.2</code></pre>
+
+<h3>session 中途換</h3>
+
+<table>
+<tr><th>方式</th><th>作用</th></tr>
+<tr><td><code>/model</code></td><td>換這個 session 的模型</td></tr>
+<tr><td><kbd>Ctrl+P</kbd></td><td>在已設定的模型間循環</td></tr>
+<tr><td><kbd>Alt+P</kbd></td><td>臨時挑一個模型</td></tr>
+<tr><td><kbd>Alt+M</kbd></td><td>開模型選擇器並設定角色</td></tr>
+</table>
+
+<h3>思考強度</h3>
+
+<p>支援推理的模型可以調強度，從 <code>off</code> 到 <code>max</code>：</p>
+
+<pre><code>omp --thinking high</code></pre>
+
+<p>session 裡用 <kbd>Shift+Tab</kbd> 循環切換，<kbd>Ctrl+T</kbd> 切換思考區塊要不要顯示出來。</p>
+
+<h2 id="slash">10. Slash 命令速查</h2>
+
+<p>在 session 裡打 <code>/</code> 會跳出補全。內建命令超過七十個，以下是最常用的。完整清單用 <code>/help</code>。</p>
+
+<h3>基本</h3>
+<table>
+<tr><th>命令</th><th>作用</th></tr>
+<tr><td><code>/help</code></td><td>顯示說明</td></tr>
+<tr><td><code>/hotkeys</code></td><td>列出所有快捷鍵</td></tr>
+<tr><td><code>/exit</code>、<code>/quit</code></td><td>離開</td></tr>
+<tr><td><code>/new</code></td><td>開新 session</td></tr>
+<tr><td><code>/clear</code></td><td>清空對話但保留 session</td></tr>
+<tr><td><code>/info</code></td><td>顯示 session 資訊與統計</td></tr>
+</table>
+
+<h3>Context 管理</h3>
+<table>
+<tr><th>命令</th><th>作用</th></tr>
+<tr><td><code>/context</code></td><td>顯示 context 用量分布</td></tr>
+<tr><td><code>/compact</code></td><td>手動壓縮 context</td></tr>
+<tr><td><code>/shake</code></td><td>丟掉工具結果與大塊內容</td></tr>
+<tr><td><code>/fresh</code></td><td>重置供應商串流狀態，不動本地對話</td></tr>
+</table>
+
+<h3>模型與模式</h3>
+<table>
+<tr><th>命令</th><th>作用</th></tr>
+<tr><td><code>/model</code>、<code>/switch</code></td><td>換模型</td></tr>
+<tr><td><code>/settings</code></td><td>開設定選單</td></tr>
+<tr><td><code>/vibe</code></td><td>導演模式：驅動常駐 worker，自己只留唯讀工具</td></tr>
+<tr><td><code>/goal</code></td><td>目標模式：設定持續性的自主目標</td></tr>
+<tr><td><code>/advisor</code></td><td>開關第二個模型，讓它旁觀每一輪並提出意見</td></tr>
+</table>
+
+<h3>工具與擴充</h3>
+<table>
+<tr><th>命令</th><th>作用</th></tr>
+<tr><td><code>/tools</code></td><td>顯示 agent 目前看得到的工具</td></tr>
+<tr><td><code>/todo</code></td><td>檢視或修改待辦清單</td></tr>
+<tr><td><code>/jobs</code></td><td>背景工作狀態</td></tr>
+<tr><td><code>/agents</code></td><td>開 agents hub</td></tr>
+<tr><td><code>/mcp</code></td><td>管理 MCP 伺服器</td></tr>
+<tr><td><code>/extensions</code></td><td>擴充套件控制中心</td></tr>
+<tr><td><code>/reload-plugins</code></td><td>重載所有 plugin</td></tr>
+</table>
+
+<blockquote><p>有些名稱是<strong>子命令</strong>而非頂層命令。例如 <code>/on</code>、<code>/off</code>、<code>/status</code> 屬於 <code>/advisor</code>；<code>/add</code>、<code>/list</code>、<code>/remove</code> 屬於 <code>/ssh</code>。打 <code>/</code> 讓補全帶你走最不會錯。</p></blockquote>
+
+<h2 id="keys">11. 快捷鍵</h2>
+
+<p>以下是預設值。<code>/hotkeys</code> 會顯示<strong>你這份組建實際生效</strong>的按鍵，包含你的自訂與擴充套件加的。</p>
+
+<table>
+<tr><th>按鍵</th><th>作用</th></tr>
+<tr><td><kbd>Ctrl+P</kbd></td><td>循環切換角色模型</td></tr>
+<tr><td><kbd>Alt+P</kbd></td><td>臨時挑一個模型</td></tr>
+<tr><td><kbd>Alt+M</kbd></td><td>開模型選擇器</td></tr>
+<tr><td><kbd>Alt+Shift+P</kbd></td><td>切換 plan mode</td></tr>
+<tr><td><kbd>Shift+Tab</kbd></td><td>循環思考強度</td></tr>
+<tr><td><kbd>Ctrl+T</kbd></td><td>顯示／隱藏思考區塊</td></tr>
+<tr><td><kbd>Ctrl+O</kbd></td><td>展開／收合工具輸出</td></tr>
+<tr><td><kbd>Ctrl+R</kbd></td><td>搜尋歷史輸入</td></tr>
+<tr><td><kbd>Ctrl+G</kbd></td><td>用外部編輯器編輯草稿</td></tr>
+<tr><td><kbd>Alt+A</kbd></td><td>開 Agent Hub</td></tr>
+<tr><td><kbd>Alt+R</kbd></td><td>重試上一個失敗的回合</td></tr>
+</table>
+
+<p>要改按鍵，編輯 <code>~/.omp/agent/keybindings.yml</code>：</p>
+
+<pre><code>app.model.cycleForward: Ctrl+P
+app.plan.toggle: Alt+Shift+P</code></pre>
+
+<div class="warn"><p><strong>Windows Terminal 使用者注意。</strong><kbd>Ctrl+V</kbd> 可能被終端機自己攔走，貼上圖片沒反應時改用 <kbd>Alt+V</kbd>。<kbd>Ctrl+Enter</kbd> 也會被吃掉，所以「排隊後續訊息」另外綁了 <kbd>Ctrl+Q</kbd>。</p></div>
+
+<p>完整的 action ID 清單見 <a href="keybindings.md">keybindings.md</a>。</p>
+
+<h2 id="next">12. 再往下走</h2>
+
+<p>上面那些足夠日常使用了。想更進一步的話，這些是主要的擴充方向：</p>
+
+<table>
+<tr><th>主題</th><th>是什麼</th><th>文件</th></tr>
+<tr><td>Skills</td><td>把重複的工作流包成可重用的技能，agent 需要時自己載入</td><td><a href="skills.md">skills.md</a>、<a href="zh-TW/skills.md">中文</a></td></tr>
+<tr><td>Extensions</td><td>用 TypeScript 加工具、slash 命令、快捷鍵，與內建同一套 API</td><td><a href="extensions.md">extensions.md</a></td></tr>
+<tr><td>MCP</td><td>接上 Model Context Protocol 伺服器，把外部系統變成 agent 的工具</td><td><a href="mcp-config.md">mcp-config.md</a></td></tr>
+<tr><td>Memory</td><td>跨 session 記住這個專案的事情</td><td><a href="memory.md">memory.md</a></td></tr>
+<tr><td>子代理</td><td><code>task</code> 平行分派工作，可隔離工作區，回傳結構化結果</td><td><a href="agent-hub.md">agent-hub.md</a>、<a href="zh-TW/agent-hub.md">中文</a></td></tr>
+<tr><td>Hooks</td><td>在特定時機自動執行你的腳本</td><td><a href="hooks.md">hooks.md</a></td></tr>
+<tr><td>魔法關鍵字</td><td>散文中寫 <code>ultrathink</code> 等字啟動特化行為</td><td><a href="magic-keywords.md">magic-keywords.md</a>、<a href="zh-TW/magic-keywords.md">中文</a></td></tr>
+</table>
+
+<p>omp 也會<strong>直接讀你既有的設定</strong> —— <code>.claude</code>、<code>.cursor</code>、<code>.windsurf</code>、<code>.gemini</code>、<code>.codex</code>、<code>.cline</code>、<code>.github/copilot</code>、<code>.vscode</code> 底下的 rules、skills 與 MCP 設定不需要轉換就能用。</p>
+
+<h2 id="trouble">13. 卡住的時候</h2>
+
+<table>
+<tr><th>症狀</th><th>怎麼處理</th></tr>
+<tr><td>打 <code>omp</code> 說找不到命令</td><td>PATH 沒設好。見<a href="#install">第 2 節</a>，改完<strong>要開新視窗</strong></td></tr>
+<tr><td>模型回應失敗或串流卡住</td><td><code>/fresh</code> 重置供應商串流狀態；再不行用 <code>/retry</code> 或 <kbd>Alt+R</kbd></td></tr>
+<tr><td>context 爆掉</td><td><code>/compact</code> 壓縮，或 <code>/shake</code> 丟掉大塊工具輸出</td></tr>
+<tr><td>它一直做錯同一件事</td><td><code>/omfg</code> 從你的抱怨產生一條規則，之後自動阻止該行為</td></tr>
+<tr><td>改壞了想退回</td><td>omp 不管版本控制。<strong>開工前先 commit</strong> 是唯一可靠的退路</td></tr>
+<tr><td>貼上圖片沒反應（Windows）</td><td>改用 <kbd>Alt+V</kbd>，終端機可能攔走了 <kbd>Ctrl+V</kbd></td></tr>
+<tr><td>中文變亂碼</td><td>終端機編碼問題，設 <code>PYTHONUTF8=1</code> 或改用 UTF-8 主控台。<strong>不要改檔案編碼</strong></td></tr>
+<tr><td>想看它到底做了什麼</td><td><code>/debug</code> 開除錯工具；log 在 <code>~/.omp/logs/</code></td></tr>
+</table>
+
+<h3>還是不行</h3>
+
+<ul>
+<li><code>omp --help</code> 與 <code>/help</code> 是即時從程式產生的，永遠比任何文件新</li>
+<li><a href="README.md">docs/README.md</a> 是全部 80 多份文件的分組索引</li>
+<li><a href="https://github.com/can1357/oh-my-pi/issues">GitHub issues</a></li>
+</ul>
+
+<p class="meta">
+本文為 oh-my-pi fork 的原創繁體中文教學，依 omp v17.3.4 撰寫。<br>
+指令與 flag 取自 <code>omp --help</code> 實際輸出，slash 命令取自 <code>packages/coding-agent/src/slash-commands/</code>，快捷鍵取自 <a href="keybindings.md">keybindings.md</a>。<br>
+上游仍在活躍開發，內容與實際行為不符時以 <code>omp --help</code>、<code>/help</code> 及英文原始文件為準。
+</p>
+
+</main>
+</div>
+<script>
+(function () {
+	var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+	var map = {};
+	links.forEach(function (a) {
+		var id = a.getAttribute('href').slice(1);
+		var el = document.getElementById(id);
+		if (el) map[id] = a;
+	});
+	var targets = Object.keys(map).map(function (id) { return document.getElementById(id); });
+	if (!targets.length || !('IntersectionObserver' in window)) return;
+	var visible = {};
+	var obs = new IntersectionObserver(function (entries) {
+		entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+		var current = null;
+		targets.forEach(function (t) { if (visible[t.id] && !current) current = t.id; });
+		if (!current) return;
+		links.forEach(function (a) { a.classList.remove('active'); });
+		if (map[current]) map[current].classList.add('active');
+	}, { rootMargin: '0px 0px -75% 0px' });
+	targets.forEach(function (t) { obs.observe(t); });
+})();
+</script>
+</body>
+</html>

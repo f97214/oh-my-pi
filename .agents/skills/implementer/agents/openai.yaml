@@ -1,0 +1,8 @@
+# bootstrap-ai-project:role:implementer:skill:v1
+interface:
+  display_name: "實作者"
+  short_description: "在主代理已確定的需求、架構與寫入範圍內完成小而可驗證的程式碼實作。"
+  default_prompt: "使用 $implementer 執行已明確指定的角色工作流。"
+
+policy:
+  allow_implicit_invocation: false

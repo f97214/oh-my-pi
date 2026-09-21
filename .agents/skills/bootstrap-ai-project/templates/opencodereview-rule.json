@@ -1,0 +1,19 @@
+{
+  "rules": [
+    {
+      "path": "{OBSERVABILITY_GLOB}",
+      "rule": "檢查可觀測性：log 必須使用結構化欄位，不得用字串插值組訊息；correlation ID 必須在入口產生或接收並貫穿所有 log、span 與對外呼叫；對外相依與端點必須有 Rate／Errors／Duration 指標，延遲看 p95 不看平均；metric label 只能是有界集合，不得使用 user ID、request ID、完整 URL 或錯誤訊息文字。log 不得出現密碼、token、金鑰或未遮蔽個資。",
+      "merge_system_rule": true
+    },
+    {
+      "path": "{INTERFACE_GLOB}",
+      "rule": "檢查介面與契約：錯誤語意是否與專案其他部分一致（不得有些拋例外、有些回傳 null、有些回傳錯誤物件）；輸入驗證是否只發生在外部邊界，共用型別契約的內部函式之間不重複驗證；介面變更是否為新增可選欄位，而非移除或改變既有欄位的型別與語意；列表查詢是否支援分頁。",
+      "merge_system_rule": true
+    },
+    {
+      "path": "{ADR_GLOB}",
+      "rule": "檢查既有架構決策是否被刪除或改寫。supersede 只能標記舊 ADR 的狀態並新增取代它的 ADR，不得修改或移除原本的決策內容與脈絡。",
+      "merge_system_rule": true
+    }
+  ]
+}

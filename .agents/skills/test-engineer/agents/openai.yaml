@@ -1,0 +1,8 @@
+# bootstrap-ai-project:role:test-engineer:skill:v1
+interface:
+  display_name: "測試工程師"
+  short_description: "在既有測試架構內建立可重現證據、補足測試並執行明確的驗證命令。"
+  default_prompt: "使用 $test-engineer 執行已明確指定的角色工作流。"
+
+policy:
+  allow_implicit_invocation: false

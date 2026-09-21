@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "start_marker": "# >>> Managed by init-project-docs >>>",
+  "end_marker": "# <<< Managed by init-project-docs <<<",
+  "strategies": {
+    "track": [
+      "!/.claude/",
+      "!/.claude/**",
+      "!/.agents/",
+      "!/.agents/**",
+      "!/.codex/",
+      "!/.codex/**",
+      "!/.ai/",
+      "!/.ai/**"
+    ],
+    "ignore": [
+      "/.claude/",
+      "/.agents/",
+      "/.codex/",
+      "/.ai/"
+    ]
+  }
+}

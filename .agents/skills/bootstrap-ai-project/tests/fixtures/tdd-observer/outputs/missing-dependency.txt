@@ -1,0 +1,3 @@
+Error: Cannot find module 'vitest'
+Require stack:
+- C:\repo\tests\add.test.ts

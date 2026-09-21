@@ -1,3 +1,32 @@
+<!-- SPECTRA:START v1.0.2 -->
+
+# Spectra Instructions
+
+This project uses Spectra for Spec-Driven Development(SDD). Specs live in `openspec/specs/`, change proposals in `openspec/changes/`.
+
+## Use `$spectra-*` skills when:
+
+- A discussion needs structure before coding → `$spectra-discuss`
+- User wants to plan, propose, or design a change → `$spectra-propose`
+- Tasks are ready to implement → `$spectra-apply`
+- There's an in-progress change to continue → `$spectra-ingest`
+- User asks about specs or how something works → `$spectra-ask`
+- Implementation is done → `$spectra-archive`
+- Commit only files related to a specific change → `$spectra-commit`
+
+## Workflow
+
+discuss? → propose → apply ⇄ ingest → archive
+
+- `discuss` is optional — skip if requirements are clear
+- Requirements change mid-work? `ingest` → resume `apply`
+
+## Parked Changes
+
+Changes can be parked（暫存）— temporarily moved out of `openspec/changes/`. Parked changes won't appear in `spectra list` but can be found with `spectra list --parked`. To restore: `spectra unpark <name>`. The `$spectra-apply` and `$spectra-ingest` skills handle parked changes automatically.
+
+<!-- SPECTRA:END -->
+
 # Development Rules
 
 ## Default Context
@@ -345,3 +374,82 @@ Location: `packages/*/CHANGELOG.md` (per package).
 2. Run `bun run release`.
 
 The script handles version bump, CHANGELOG finalization, commit, tag, publish, and adding new `[Unreleased]` sections.
+
+<!-- bootstrap-ai-project:agents-conventions:start -->
+
+# 跨 AI 工具協作（bootstrap-ai-project 管理區塊）
+
+本區塊由 `bootstrap-ai-project` 維護，補上本檔原本沒有的三件事：開工前的必讀清單、跨 Agent 治理，以及專案慣例的單一落點。**上方所有既有規則不受本區塊影響，衝突時以上方為準。**
+
+## 開工前必讀
+
+存在就讀，不存在就跳過，不要為此建立空檔：
+
+| 讀什麼 | 什麼時候 |
+|---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)、[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | 動到架構、分層或新增模組之前 |
+| [`docs/TESTING.md`](docs/TESTING.md) | 動測試之前 |
+| `CONTEXT.md`（或 `CONTEXT-MAP.md` 定位到的詞彙表） | 建立提案或開始實作之前 |
+| `docs/adr/README.md` | 建立提案或開始實作之前；需要細節時才展開個別 ADR |
+
+**知識索引、摘要層或快取的輸出不取代這份清單。** 這些文件是契約，回答「可不可以這樣做」；程式碼與測試回答「現在是什麼樣」。從 source 投影出來的東西導不出禁令——已經被否決的做法、不准用的詞、不能跨的界線，都不存在於程式碼裡。
+
+文件與程式碼衝突時停止並回報，不自行選邊。
+
+## 跨 Agent 治理
+
+- 主代理保留需求、規劃、架構、公開介面、整合、驗證與最終輸出所有權。
+- Skill 在目前主線程執行；Agent 使用隔離上下文，完成後只向主代理回報。
+- Worker 只執行明確契約，不重新解讀最終目標、不擴張範圍、不建立子代理。
+- 同一 checkout 同時只允許一個 writer；唯讀 Agent 才可平行。
+- 主代理必須回讀 Agent 實際修改的檔案與 diff，並核對測試、建置或 lint 的命令與退出碼。
+- Agent 資訊不足、範圍衝突或需要架構／跨模組決策時，回報 `blocked`，不得自行猜測。
+
+四個角色入口（Claude 用 `/name`，Codex 用 `$name`）：
+
+| 角色 | Skill | Agent |
+|---|---|---|
+| `implementer` | `.claude/skills/implementer/`、`.agents/skills/implementer/` | `.claude/agents/implementer.md`、`.codex/agents/implementer.toml` |
+| `test-engineer` | `.claude/skills/test-engineer/`、`.agents/skills/test-engineer/` | `.claude/agents/test-engineer.md`、`.codex/agents/test-engineer.toml` |
+| `doc-writer` | `.claude/skills/doc-writer/`、`.agents/skills/doc-writer/` | `.claude/agents/doc-writer.md`、`.codex/agents/doc-writer.toml` |
+| `git-commit` | `.claude/skills/git-commit/`、`.agents/skills/git-commit/` | 未設定（manual-only） |
+
+`git-commit` 只有在使用者明確要求時可執行；不得由模型自行判斷工作完成後提交。這與上方 `Commands` 節的「NEVER commit unless asked」是同一條規則。
+
+## 專案慣例
+
+- **專案：** oh-my-pi（binary `omp`）
+- **選定目標：** repo 根目錄
+- **技術棧：** Bun `1.3.14` + TypeScript（`package.json:packageManager`）、Rust `nightly-2026-07-28`（`rust-toolchain.toml`）、Python 3（`python/omp-rpc`、`python/robomp`）
+- **建置指令：** `bun setup` 起步，`bun run build`；改 Rust 或 `packages/natives` 後 `bun run build:native`
+- **測試指令：** `bun test`（細節與分桶理由見 [`docs/TESTING.md`](docs/TESTING.md)）
+- **檢查指令：** `bun check`（**絕不用 `tsc`／`npx tsc`**）
+- **Lint 指令：** `bun run lint`
+- **架構：** 見 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- **開發流程：** 見 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
+- **文件索引：** 見 [`docs/README.md`](docs/README.md)
+
+## 工具專屬入口
+
+- Claude Code 透過 `CLAUDE.md` 的 `@AGENTS.md` 引用本檔；`.claude/` 設定只對 Claude schema 生效。
+- OpenAI Codex 與支援 AGENTS.md 的工具直接讀取本檔。
+- Codex Skills 位於 `.agents/skills/`，自訂 Agents 位於 `.codex/agents/`；兩者不是 Claude Markdown Agent 的別名。
+- 不建立 `CODEX.md`。既有 `GEMINI.md` 不由本區塊管理。
+- `.claude/`、`.agents/`、`.codex/`、`.ai/` 採**團隊追蹤**策略，納入版本控制。
+
+## 收工閘門
+
+`.ai/bootstrap-ai-project/` 下的共用 hook runtime 由 `.claude/settings.json` 與 `.codex/hooks.json` 各自以原生 schema 註冊：
+
+- `verify-gate.py` —— Stop 前對本 session 的變更跑 `verify-gate.json` 列出的檢查，只看退出碼；連續三次未過就放行並要求如實告知。
+- `claim-ledger.py` + `claim-guard.py` —— 記帳並比對訊息裡的宣稱有無對應紀錄。
+
+兩者都是**防呆不是防駭**，擋的是疏忽而非刻意規避。
+
+**目前缺口**：閘門只涵蓋 Python 工具鏈，TypeScript 與 Rust 兩側都零覆蓋。TypeScript 是因為還沒實際跑過 `check:ts`／`ci:test:smoke` 確認跑得完（bun 與相依本身已就緒）；Rust 是因為 `bun run check:rs` 在非 CI 且工作樹無 Rust 改動時會直接跳過，且它跑的是 `fmt --check` 與 `clippy`、不是 `cargo check`（`cargo check --workspace --all-targets` 本身已於 2026-08-15 實測通過）。**沒驗證過的命令不要加進閘門。** 補齊方式與 Windows 的 MSVC 環境設定見 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)；跳過條件與各 Rust task 的實際命令見 [`docs/TESTING.md`](docs/TESTING.md#rust-task-的跳過行為)。
+
+## 來源
+
+`package.json`、`bunfig.toml`、`rust-toolchain.toml`、`Cargo.toml`、`.spectra.yaml`、`scripts/ci-test-ts.ts`、`docs/`、`.claude/settings.json`、`.codex/hooks.json`、`.ai/bootstrap-ai-project/verify-gate.json`。環境探測（2026-08-15）：`bun --version`（`1.3.14`）、`node_modules/` 已存在、原生 addon `pi_natives.win32-x64-modern.node` 已產出、`omp --version`（`omp/17.3.4`）。2026-08-14 量測、本次未重測：`cargo 1.99.0-nightly`、`Python 3.14.0`。
+
+<!-- bootstrap-ai-project:agents-conventions:end -->

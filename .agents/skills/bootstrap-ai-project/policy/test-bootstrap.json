@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "policy": "直接依賴必須使用明確版本；實作者更新版本表時必須在 fixtures 中驗證命令。",
+  "frameworks": {
+    "dotnet": {
+      "framework": "xunit",
+      "packages": {
+        "Microsoft.NET.Test.Sdk": "17.14.1",
+        "xunit": "2.9.3",
+        "xunit.runner.visualstudio": "3.1.5",
+        "coverlet.collector": "6.0.4"
+      }
+    },
+    "node": {
+      "framework": "vitest",
+      "packages": {
+        "vitest": "3.2.4"
+      }
+    },
+    "python": {
+      "framework": "pytest",
+      "packages": {
+        "pytest": "8.4.1"
+      },
+      "requires_isolated_environment": true
+    },
+    "ruby": {
+      "framework": "rspec",
+      "packages": {
+        "rspec": "3.13.1"
+      }
+    },
+    "go": {
+      "framework": "testing",
+      "packages": {}
+    },
+    "rust": {
+      "framework": "test",
+      "packages": {}
+    }
+  }
+}

@@ -1,0 +1,2 @@
+?   	example.com/project/cmd/app	[no test files]
+ok  	example.com/project/pkg/math	0.004s

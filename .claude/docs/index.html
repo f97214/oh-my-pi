@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>開發流程與 Skill 說明</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfa; --panel: #ffffff; --ink: #1c1b1a; --muted: #6b6a67;
+  --line: #e2e0dc; --accent: #b3502a; --accent-soft: #f3e6df;
+  --code-bg: #f4f2ef; --human: #2f6f5e; --human-soft: #e2efea;
+  --mono: ui-monospace, "Cascadia Code", "Consolas", "Menlo", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141613; --panel: #1b1e1a; --ink: #e8e6e1; --muted: #9c9a94;
+    --line: #2e322c; --accent: #e08c62; --accent-soft: #33231b;
+    --code-bg: #10120f; --human: #7fc4ae; --human-soft: #1c2b26;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Noto Sans TC", -apple-system, "Segoe UI", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased;
+}
+.layout { display: grid; grid-template-columns: 262px minmax(0, 1fr); gap: 40px;
+  max-width: 1380px; margin: 0 auto; padding: 0 28px 96px; }
+nav { position: sticky; top: 0; align-self: start; max-height: 100vh;
+  overflow-y: auto; padding: 32px 0; font-size: 14px; }
+nav .brand { font-weight: 700; font-size: 17px; letter-spacing: .01em; margin-bottom: 4px; }
+nav .brand-sub { color: var(--muted); font-size: 12.5px; margin-bottom: 22px; }
+nav a { display: block; padding: 5px 12px; color: var(--muted); text-decoration: none;
+  border-left: 2px solid transparent; }
+nav a:hover { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+nav a.lv3 { padding-left: 26px; font-size: 13px; }
+nav .nav-group { margin-top: 18px; font-weight: 600; color: var(--ink);
+  text-transform: none; font-size: 12.5px; letter-spacing: .06em; padding-left: 12px; }
+main { padding-top: 32px; min-width: 0; }
+header.page { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 12px; }
+header.page h1 { font-size: 34px; line-height: 1.25; margin: 0 0 10px; letter-spacing: -.01em; }
+header.page .lede { color: var(--muted); margin: 0 0 18px; max-width: 62ch; }
+.generated { font-size: 13px; color: var(--muted); background: var(--code-bg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.generated code { background: none; padding: 0; }
+h2 { font-size: 25px; margin: 52px 0 14px; padding-top: 8px; letter-spacing: -.005em; }
+h3 { font-size: 18.5px; margin: 30px 0 10px; }
+h4 { font-size: 15.5px; margin: 20px 0 6px; }
+p { margin: 12px 0; }
+a { color: var(--accent); }
+hr { border: none; border-top: 1px solid var(--line); margin: 40px 0; }
+ul, ol { padding-left: 22px; margin: 12px 0; }
+li { margin: 5px 0; }
+blockquote { margin: 18px 0; padding: 4px 20px; border-left: 3px solid var(--accent);
+  background: var(--accent-soft); border-radius: 0 8px 8px 0; }
+blockquote p { margin: 10px 0; }
+code { font-family: var(--mono); font-size: .875em; background: var(--code-bg);
+  padding: 2px 6px; border-radius: 5px; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px 18px; overflow-x: auto; margin: 16px 0; }
+pre code { background: none; padding: 0; font-size: 13.5px; line-height: 1.65; }
+.table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line);
+  border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line);
+  vertical-align: top; }
+th { background: var(--code-bg); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+.flow { margin: 24px 0 8px; padding: 0; overflow-x: auto; }
+.flow svg { min-width: 940px; width: 100%; height: auto; }
+.flow figcaption { color: var(--muted); font-size: 13.5px; margin-top: 6px; }
+.node rect { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.node--ai rect { stroke: var(--accent); }
+.node--optional rect { stroke-dasharray: 5 4; }
+.node--human rect { stroke: var(--human); fill: var(--human-soft); }
+.node-stage { font: 600 15px/1 sans-serif; fill: var(--ink); }
+.node-cmd { font: 500 13px/1 var(--mono); fill: var(--accent); }
+.node--human .node-cmd { fill: var(--human); }
+.node-detail { font: 12.5px/1 sans-serif; fill: var(--muted); }
+.arrow { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+#arrowhead path { fill: var(--muted); }
+.checkpoint { font: 600 12.5px/1 sans-serif; fill: var(--accent); }
+.checkpoint-sub { font: 11.5px/1 sans-serif; fill: var(--muted); }
+.tick { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 3 3; fill: none; }
+.span { stroke: var(--accent); stroke-width: 2; fill: none; opacity: .5; }
+.span--human { stroke: var(--human); }
+.span-label { font: 12.5px/1 sans-serif; fill: var(--accent); }
+.span-label--human { fill: var(--human); }
+.icon { vertical-align: -3px; margin-right: 8px; color: var(--accent); }
+.group { display: flex; align-items: center; margin-top: 34px; }
+.group .count { margin-left: 10px; font: 500 12px/1 var(--mono); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 20px; padding: 3px 9px; }
+.cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 11px;
+  padding: 14px 16px; }
+.card h4 { margin: 0 0 6px; font-family: var(--mono); font-size: 14.5px; color: var(--accent); }
+.card p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.6; }
+.card--readonly { border-style: dashed; }
+.card .tag { display: inline-block; margin-top: 9px; font-size: 11.5px; color: var(--muted);
+  background: var(--code-bg); border-radius: 20px; padding: 2px 9px; }
+.example { border: 1px solid var(--line); border-radius: 11px; padding: 4px 18px 14px;
+  margin: 18px 0; background: var(--panel); }
+.example h3 { margin-top: 16px; }
+.example .source { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; }
+.section-lede { color: var(--muted); max-width: 66ch; }
+@media (max-width: 980px) {
+  .layout { grid-template-columns: 1fr; gap: 0; padding: 0 18px 64px; }
+  nav { position: static; max-height: none; border-bottom: 1px solid var(--line);
+    padding: 20px 0; }
+  nav a { display: inline-block; border-left: none; border-bottom: 2px solid transparent; }
+  nav a.lv3 { display: none; }
+  header.page h1 { font-size: 27px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">開發流程與 Skill</div>
+  <div class="brand-sub">SDD + Spectra TDD</div>
+  <a href="#overview">流程總覽</a>
+  <div class="nav-group">實例走查</div><a class="" href="#前置-這個專案初始化過了嗎">前置：這個專案初始化過了嗎</a><a class="" href="#階段-0-需求還講不清楚時">階段 0：需求還講不清楚時</a><a class="" href="#階段-1-把需求變成規格">階段 1：把需求變成規格</a><a class="" href="#階段-2-實作">階段 2：實作</a><a class="" href="#階段-3-驗證完整性">階段 3：驗證完整性</a><a class="" href="#歸檔">歸檔</a><a class="" href="#上線">上線</a><a class="" href="#換手">換手</a><div class="nav-group">流程細節</div><a class="" href="#完整流程總覽">完整流程總覽</a><a class="" href="#先判斷這件事要走到多深">先判斷這件事要走到多深</a><a class="" href="#階段-0-需求釐清-可選">階段 0 — 需求釐清（可選）</a><a class="" href="#階段-1-規格提案-sdd-起點">階段 1 — 規格提案（SDD 起點）</a><a class="" href="#階段-2-實作-內嵌-tdd">階段 2 — 實作（內嵌 TDD）</a><a class="" href="#階段-3-完整性驗證">階段 3 — 完整性驗證</a><a class="" href="#階段-n-歸檔">階段 N — 歸檔</a><a class="" href="#發布與汰除-歸檔之後">發布與汰除（歸檔之後）</a><a class="" href="#測試證據觀測層-可選-由-bootstrap-ai-project-完整模式建立">測試證據觀測層（可選，由 `/bootstrap-ai-project` 完整模式建立）</a><a class="" href="#統一規則-原-sdd-preflight-md-併入">統一規則（原 sdd-preflight.md 併入）</a><a class="" href="#spectra-ui-灰色-checkbox-的處理">Spectra UI 灰色 checkbox 的處理</a><a class="" href="#與官方-plugin-的互動點">與官方 Plugin 的互動點</a><a class="" href="#產出檔案總覽">產出檔案總覽</a><a class="" href="#維護提醒-需要同步的雙寫點">維護提醒：需要同步的雙寫點</a><div class="nav-group">Skill 目錄</div><a class="" href="#skills">全部 Skill</a><div class="nav-group">格式範例</div><a class="" href="#examples">格式範例集</a>
+</nav>
+<main>
+<header class="page">
+  <h1>開發流程與 Skill 說明</h1>
+  <p class="lede">整合 Spectra（SDD）與 TDD 的單一軌道流程，由
+    Codex 用 <code>$bootstrap-ai-project</code>、Claude 用 <code>/bootstrap-ai-project</code> 初始化，再由各宿主原生的 <code>spectra-*</code> Skills 驅動。</p>
+  <p class="generated">本頁由 <code>.claude/tools/build_docs.py</code> 產生，<strong>請勿手動編輯</strong>。
+    內容來源：<code>.claude/docs/development-workflow.md</code> · <code>.claude/docs/walkthrough.md</code>、各 <code>SKILL.md</code> 與 <code>templates/rules/*.md</code>。
+    改完來源後重跑產生器。</p>
+</header>
+
+<h2 id="overview"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8L15.6 7"/><path d="M8.2 13.2L15.6 17"/></svg>流程總覽</h2>
+
+<figure class="flow">
+<svg viewBox="0 0 1180 230" role="img" aria-label="開發流程階段圖">
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+            markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z"/></marker>
+  </defs>
+  <text class="checkpoint" x="298.0" y="34" text-anchor="middle">ADR 檢查點 ①</text>
+  <text class="checkpoint-sub" x="298.0" y="52" text-anchor="middle">design 收斂後</text>
+  <path class="tick" d="M298.0 58 L298.0 74"/>
+  <text class="checkpoint" x="904.0" y="34" text-anchor="middle">ADR 檢查點 ②</text>
+  <text class="checkpoint-sub" x="904.0" y="52" text-anchor="middle">歸檔前回收</text>
+  <path class="tick" d="M904.0 58 L904.0 74"/>
+  <g class="node node--optional" data-stage="階段 0"><rect x="12" y="78" width="168" height="92" rx="12"/><text class="node-stage" x="28" y="105">階段 0</text><text class="node-cmd" x="28" y="129">/grill</text><text class="node-detail" x="28" y="151">訪談釐清需求</text></g><path class="arrow" d="M186 124.0 L206 124.0" marker-end="url(#arrowhead)"/><g class="node node--ai" data-stage="階段 1"><rect x="214" y="78" width="168" height="92" rx="12"/><text class="node-stage" x="230" y="105">階段 1</text><text class="node-cmd" x="230" y="129">/spectra-propose</text><text class="node-detail" x="230" y="151">產出 spec 與 tasks</text></g><path class="arrow" d="M388 124.0 L408 124.0" marker-end="url(#arrowhead)"/><g class="node node--ai" data-stage="階段 2"><rect x="416" y="78" width="168" height="92" rx="12"/><text class="node-stage" x="432" y="105">階段 2</text><text class="node-cmd" x="432" y="129">/spectra-apply</text><text class="node-detail" x="432" y="151">Red → Green → Refactor</text></g><path class="arrow" d="M590 124.0 L610 124.0" marker-end="url(#arrowhead)"/><g class="node node--ai" data-stage="階段 3"><rect x="618" y="78" width="168" height="92" rx="12"/><text class="node-stage" x="634" y="105">階段 3</text><text class="node-cmd" x="634" y="129">spectra analyze</text><text class="node-detail" x="634" y="151">完整性驗證</text></g><path class="arrow" d="M792 124.0 L812 124.0" marker-end="url(#arrowhead)"/><g class="node node--ai" data-stage="階段 N"><rect x="820" y="78" width="168" height="92" rx="12"/><text class="node-stage" x="836" y="105">階段 N</text><text class="node-cmd" x="836" y="129">/spectra-archive</text><text class="node-detail" x="836" y="151">歸檔並同步主規格</text></g><path class="arrow" d="M994 124.0 L1014 124.0" marker-end="url(#arrowhead)"/><g class="node node--human" data-stage="發布與汰除"><rect x="1022" y="78" width="168" height="92" rx="12"/><text class="node-stage" x="1038" y="105">發布與汰除</text><text class="node-cmd" x="1038" y="129">人主導</text><text class="node-detail" x="1038" y="151">分階段推出與回滾</text></g>
+  <path class="span" d="M12 192 L1005.0 192"/>
+  <text class="span-label" x="508.5" y="212"
+        text-anchor="middle">AI 主導，遇衝突停下來問你</text>
+  <path class="span span--human" d="M1025.0 192 L1168
+        192"/>
+  <text class="span-label span-label--human" x="1092.5"
+        y="212" text-anchor="middle">你決定</text>
+</svg>
+<figcaption>階段 0 可跳過；發布通常是數個 change 累積後一起進行。</figcaption>
+</figure>
+
+
+<hr>
+<h2 id="walkthrough-section"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/></svg>實例走查</h2>
+<p class="section-lede">用一個具體例子走完整條流程，看每一步實際會發生什麼。</p>
+<p>用一個具體例子走完整條流程：在 QuartzTemplate 新增一支 Job，每 15 分鐘向外部 API 拉取資料並寫入資料庫。</p>
+<p>每一段都寫出：<strong>你下什麼指令、產出什麼檔案、這一步被哪條規則約束、AI 會在哪裡停下來問你</strong>。</p>
+<hr>
+<h2 id="前置-這個專案初始化過了嗎">前置：這個專案初始化過了嗎</h2>
+<p>流程的規則不是憑空生效的，它們是 <code>/bootstrap-ai-project</code> 產生到專案裡的檔案。</p>
+<pre><code>/bootstrap-ai-project</code></pre>
+<p>完整模式下逐項確認後，專案會拿到：</p>
+<div class="table-wrap"><table><thead><tr><th>檔案</th><th>作用</th></tr></thead><tbody><tr><td><code>CLAUDE.md</code>、<code>AGENTS.md</code>、<code>docs/</code></td><td>專案文件與協作規範</td></tr><tr><td><code>.spectra.yaml</code></td><td><code>tdd: true</code> 等旗標，決定 <code>/spectra-apply</code> 的紀律</td></tr><tr><td><code>.claude/rules/testing.md</code></td><td>測試證據契約</td></tr><tr><td><code>.claude/rules/adr.md</code></td><td>架構決策的讀取義務與檢查點</td></tr><tr><td><code>.claude/rules/glossary.md</code></td><td>詞彙表紀律</td></tr><tr><td><code>.claude/rules/engineering.md</code></td><td>對抗審查、介面契約、可觀測性</td></tr></tbody></table></div>
+<p><strong>已經初始化過的舊專案不會自動獲得新增的 rule</strong>——要重跑一次 bootstrap 並選取才有。</p>
+<hr>
+<h2 id="階段-0-需求還講不清楚時">階段 0：需求還講不清楚時</h2>
+<pre><code>/grill 新增一支排程 Job，定期同步外部報價資料</code></pre>
+<p>AI 會分輪提問，每題附建議答案。你只需要做決策，事實由 AI 自己查。這一輪可能會問：</p>
+<ul><li>拉取失敗時是整批重試，還是逐筆記錄失敗？</li><li>「報價」在這個系統裡指的是什麼？和既有的 <code>Price</code> 是同一個概念嗎？</li><li>15 分鐘是硬需求，還是「大約每小時幾次就好」？</li><li>上一次成功時間要持久化嗎？服務重啟後要補跑嗎？</li></ul>
+<p>過程中：</p>
+<ul><li>敲定的術語<strong>當場</strong>寫進 <code>CONTEXT.md</code>——例如確認「報價（Quote）」與既有的「價格（Price）」是不同概念</li><li>符合三條件（難以回頭、沒脈絡會困惑、真實取捨）的決策寫成 ADR——例如「失敗批次不阻塞後續批次，改記錄到補償佇列」</li><li>與既有 <code>accepted</code> ADR 衝突時，AI <strong>停下來問你</strong>，不會默默推翻</li></ul>
+<p>需求本來就清楚就跳過這一階。</p>
+<hr>
+<h2 id="階段-1-把需求變成規格">階段 1：把需求變成規格</h2>
+<pre><code>/spectra-propose 新增報價同步 Job</code></pre>
+<p>產出並自動 park：</p>
+<pre><code>openspec/changes/add-quote-sync-job/
+├── proposal.md   # 為什麼要做、會改什麼、影響範圍
+├── design.md     # Job → Service → Repository 的分層、重試策略、資料流
+├── tasks.md      # - [ ] 形式的可執行任務
+└── specs/quote-sync/spec.md   # Requirement + GIVEN/WHEN/THEN + Example</code></pre>
+<p>這一步的關鍵是 <strong>spec.md 裡的 <code>##### Example:</code> 區塊</strong>——階段 2 的測試值會直接取自那裡，不是實作時現編的。</p>
+<p><code>design.md</code> 寫完後觸發 <strong>ADR 檢查點①</strong>：其中的架構取捨若滿足三條件，AI 會提議寫成 <code>docs/adr/NNNN-*.md</code>。因為 <code>design.md</code> 會隨 change 一起歸檔，決策脈絡必須先脫離它。</p>
+<p>超過 15 個 task 時 AI 會建議拆成多個 change。</p>
+<hr>
+<h2 id="階段-2-實作">階段 2：實作</h2>
+<pre><code>/spectra-apply add-quote-sync-job</code></pre>
+<p>一個指令跑完整個循環。每個 <code>- [ ]</code> task 走 Red → Green → Refactor：</p>
+<p><strong>Red</strong> — 先寫失敗測試，測試值取自 spec 的 Example：</p>
+<pre><code>TDD Red: task=2.1; evidence=quote-sync-retry</code></pre>
+<p>命令的 description 必須完全符合這個格式，test-observer 才會把它算成證據。編譯錯誤、缺相依、逾時都<strong>不算</strong>有效的 Red。</p>
+<p><strong>Green</strong> — 不違反 <code>design.md</code> 分層的最小實作。</p>
+<p>這裡會踩到 <code>.claude/rules/engineering.md</code>：</p>
+<ul><li>決定「重試是否冪等」時觸發<strong>對抗審查</strong>——這是型別系統驗證不了的性質。AI 會寫下 CLAIM、把「產物＋契約」交給獨立審查（<strong>不給 CLAIM</strong>，否則審查者會附和）、分類發現、最多三輪就升級問你</li><li>寫 log 時<strong>不能</strong>寫成 <code>log.Info($"同步 {count} 筆完成")</code>，要用結構化欄位，並帶上貫穿全程的 correlation ID</li><li>對外 API 呼叫要有 RED 指標（次數、失敗率、延遲分布），延遲看 p95 不看平均</li><li>這支 Job 的名稱、欄位、型別要照 <code>CONTEXT.md</code> 的 canonical term——不能一邊叫 Quote 一邊叫 Price</li></ul>
+<p><strong>Refactor</strong> — 測試持續通過下改善品質，不得跨層搬遷。</p>
+<p>每完成一個 task 立即：</p>
+<pre><code>spectra task done --change "add-quote-sync-job" 2.1</code></pre>
+<p><strong>禁止直接編輯 tasks.md 的 checkbox</strong>——CLI 同時更新 checkbox 與 <code>.spectra/touched/</code>，後者是歸檔時注入 @trace 的唯一來源。</p>
+<p>AI 會在這些情況停下來問你：測試與 spec 衝突、需求超出 spec 的 Scenario、與既有 ADR 衝突、詞彙表定義矛盾、對抗審查三輪未收斂。</p>
+<hr>
+<h2 id="階段-3-驗證完整性">階段 3：驗證完整性</h2>
+<pre><code>spectra analyze add-quote-sync-job --json</code></pre>
+<p>檢查每個 Requirement 都有對應實作、design 與 spec 一致、有沒有模糊或缺口。有 Critical 發現就回頭修。</p>
+<hr>
+<h2 id="歸檔">歸檔</h2>
+<pre><code>/spectra-archive add-quote-sync-job</code></pre>
+<p>歸檔前觸發 <strong>ADR 檢查點②</strong>：確認這次引入的長期決策已經脫離 <code>openspec/changes/</code>，否則它會跟著被埋進 <code>archive/</code>。</p>
+<p>歸檔會把 spec delta 併進主規格、注入 @trace、把整個 change 目錄移到 <code>openspec/changes/archive/YYYY-MM-DD-add-quote-sync-job/</code>。</p>
+<hr>
+<h2 id="上線">上線</h2>
+<p><strong>流程到歸檔為止是 AI 主導的；上線之後由你主導。</strong></p>
+<p>上線前先過檢查清單（排程服務適用的部分）：祕密沒有進版控、環境變數已設定、資料庫遷移已備妥、log 與錯誤回報接好、健康檢查會回應。</p>
+<p>排程 Job 的分階段推出通常是：</p>
+<pre><code>staging 跑一輪完整週期
+  → 正式環境部署，但 Job 的 trigger 先停用
+  → 手動觸發一次，確認資料正確
+  → 恢復排程，觀察 24 小時</code></pre>
+<p>觀察錯誤率與 p95 延遲：超過基準兩倍、或延遲惡化逾五成，立即回滾，不先討論。</p>
+<p>若這支新 Job 是要取代舊的 WinForm gateway，汰除照三步走：新舊並行 → 用指標確認舊的零使用 → 才移除。資料庫欄位一律<strong>擴充 → 遷移 → 收縮</strong>，絕不原地改名。</p>
+<hr>
+<h2 id="換手">換手</h2>
+<pre><code>/handoff 報價同步 Job 已完成階段 2，剩下 analyze 與上線</code></pre>
+<p>把對話濃縮成交接文件存到系統暫存目錄（不進工作區），列出接手的 agent 該呼叫哪些 skill。</p>
+
+<hr>
+<h2 id="workflow-section"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z"/></svg>流程細節與統一規則</h2>
+<p>本流程整合 Spectra（SDD）與 TDD；Codex 由 <code>$bootstrap-ai-project</code>、Claude 由 <code>/bootstrap-ai-project</code> 初始化，再由各宿主原生的 <code>spectra-*</code> Skills 驅動。</p>
+<blockquote><p><strong>2026-08-13 更新（二）</strong>：評估 alibaba/open-code-review（Apache-2.0）後，於階段 3 新增可選的程式碼審查段落，並讓 <code>/bootstrap-ai-project</code> 完整模式可選擇產出 <code>.opencodereview/rule.json</code>——把 <code>engineering.md</code> 第 2、3 節與 <code>adr.md</code> 中能由 diff 檢出的部分翻成 path-scoped 審查規則。採 delegate 模式（<code>ocr</code> 只做確定性的檔案選取與規則解析，判讀由 agent 自己的模型執行），不需要額外的 LLM endpoint。明訂不得寫進 <code>verify-gate.json</code>。</p></blockquote>
+<blockquote><p><strong>2026-08-13 更新</strong>：評估 humanlayer/12-factor-agents 後只做精選撈取（該文件面向 LLM runtime 架構，與本流程不同層，13 條因子中多數不適用或已有等價機制）——<code>engineering.md</code> 新增第 5 節「升級給人的格式與迴圈上限」與第 6 節「Context 工程」，並新增「先判斷這件事要走到多深」任務分級章節（概念參考 humanlayer 的 ACE-FCA 與 WSFF，未引用原文）。</p></blockquote>
+<blockquote><p><strong>2026-08-09 更新</strong>：Bootstrap 共同核心移至 <code>.agents/skills/bootstrap-ai-project/</code>，新增 Claude／Codex 四角色的 Skill／Agent 雙入口、schema v2、跨宿主原子衝突處理，以及 <code>.ai/bootstrap-ai-project/</code> 共用 Hook runtime。</p></blockquote>
+<blockquote><p><strong>2026-08-06 更新</strong>：全面改寫以反映現況——</p>
+<ul><li><code>tf-*</code> 系列（舊軌道 B）已於 a94e748 移除，TDD 只剩單一模式：內嵌於 <code>/spectra-apply</code> 的 Spectra TDD（<code>.spectra.yaml: tdd: true</code> 啟用）</li><li><code>/init-project-docs</code> 已升級為 <code>/bootstrap-ai-project</code>（交易式 Discover → Decide → Preview → Apply → Verify）</li><li>新增測試證據觀測層（fbbba0c）：<code>.claude/rules/testing.md</code> 契約 + test-observer Hook + <code>test-evidence.md</code> 報告</li><li>新增 <code>/grill</code>（需求訪談＋領域建模）與 <code>/handoff</code>（session 交接），改編自 mattpocock/skills</li><li>原 <code>sdd-preflight.md</code>（tf-* 專用共用片段）已併入本文件「統一規則」後移除</li><li>補上 ADR 閉環：新增 <code>.claude/rules/adr.md</code> 契約（讀取端＋兩個檢查點）、<code>docs/adr/README.md</code> 索引與 supersede 程序</li><li>補上詞彙表閉環：新增 <code>.claude/rules/glossary.md</code> 契約，讓 <code>CONTEXT.md</code> 在實作期被實際讀取與遵守</li><li>repo 自身補上 <code>README.md</code> / <code>AGENTS.md</code> / <code>CLAUDE.md</code> / <code>.gitignore</code>，並新增 <code>.claude/tools/lint_skills.py</code> 通用 skill lint</li><li>補上四項工程空白（改寫自 addyosmani/agent-skills，MIT）：<code>.claude/rules/engineering.md</code>（對抗審查／介面契約／可觀測性）與「發布與汰除」章節</li><li>新增 <code>walkthrough.md</code> 實例走查與 <code>.claude/tools/build_docs.py</code>，由本檔與各 <code>SKILL.md</code> 產生說明網頁 <code>index.html</code>（產生物，勿手動編輯）</li><li>新增收工閘門 Hook（概念改寫自 agentcrew-academy/harness-starter-kit，MIT）：<code>verify-gate.py</code> 與 <code>claim-ledger.py</code>＋<code>claim-guard.py</code>，見統一規則 J；並新增 <code>/first-principles</code> skill</li><li>第二輪撈取 addyosmani/agent-skills：<code>engineering.md</code> 新增第 4 節「以官方文件為準」，兩份 <code>AGENTS.md</code> 的分支章節擴為完整 Git 工作流</li></ul></blockquote>
+<hr>
+<h2 id="完整流程總覽">完整流程總覽</h2>
+<pre><code>需求模糊 → /grill（分輪訪談＋沉澱 CONTEXT.md / ADR）
+需求清楚 ─────────────┐
+                      ↓
+   /spectra-propose → /spectra-apply → spectra analyze → /spectra-archive
+     ▲ ADR 檢查點①    （內嵌 TDD）                        ▲ ADR 檢查點②
+     design 收斂後                                        歸檔前回收
+                                                                ↓
+                                              數個 change 累積後 → 發布與汰除
+                                                        （人主導，不編號）
+換手/收工 → /handoff</code></pre>
+<p>ADR 檢查點由下游專案的 <code>.claude/rules/adr.md</code> 契約驅動，詞彙表紀律由 <code>.claude/rules/glossary.md</code> 驅動——兩者都不修改 <code>spectra-*</code> Skill。開工前先讀 <code>CONTEXT.md</code> 與 <code>docs/adr/README.md</code>，詳見「統一規則 F、G」。</p>
+<h3 id="bootstrap-雙宿主角色入口">Bootstrap 雙宿主角色入口</h3>
+<p>完整模式預設選 Claude＋Codex，並逐角色決定 Disabled／Skill／Agent／Both：</p>
+<div class="table-wrap"><table><thead><tr><th>角色</th><th>Skill 直接入口</th><th>Agent 隔離入口</th></tr></thead><tbody><tr><td><code>implementer</code></td><td><code>$implementer</code>／<code>/implementer</code></td><td>主代理依名稱委派</td></tr><tr><td><code>test-engineer</code></td><td><code>$test-engineer</code>／<code>/test-engineer</code></td><td>主代理依名稱委派</td></tr><tr><td><code>doc-writer</code></td><td><code>$doc-writer</code>／<code>/doc-writer</code></td><td>主代理依名稱委派</td></tr><tr><td><code>git-commit</code></td><td><code>$git-commit</code>／<code>/git-commit</code>，只能明確呼叫</td><td>主代理只能在使用者已要求 commit 時委派</td></tr></tbody></table></div>
+<p>Codex Skills 產生在 <code>.agents/skills/&lt;role&gt;/</code>，Claude Skills 在 <code>.claude/skills/&lt;role&gt;/</code>；Codex Agents 是 <code>.codex/agents/&lt;role&gt;.toml</code>，Claude Agents 是 <code>.claude/agents/&lt;role&gt;.md</code>。四者都直接內嵌同一份 canonical instructions，不要求代理再讀另一個角色檔，也不硬編模型或權限。</p>
+<p>Codex 的 project Skills、Agents 與 Hooks 只有在專案受信任後載入；新增入口後以新 task/session 驗證 discovery。舊 task 的 skill metadata 不會保證熱更新。</p>
+<p>Skill 在目前主線程執行；Agent 使用隔離上下文後回報主代理。主代理始終保留需求、架構、公開介面、整合、驗證與最終輸出所有權。同一 checkout 只允許一個 writer，唯讀 Agent 才可平行。</p>
+<p>同一角色同一種入口是跨宿主原子群組：若任一既有檔缺少 managed marker，Claude 與 Codex 的該組入口全部標為 conflict，不會只更新一邊。Spectra 雙宿主初始化固定使用 <code>spectra init &lt;target&gt; --tools claude,codex</code>，產生的 <code>.agents/skills/spectra-*</code> 與角色 Skills 共存。</p>
+<p>輔助指令（任何階段可用）：</p>
+<div class="table-wrap"><table><thead><tr><th>指令</th><th>用途</th></tr></thead><tbody><tr><td><code>/grill</code></td><td>決策樹分輪訪談釐清需求，同步維護 <code>CONTEXT.md</code> 詞彙表與 <code>docs/adr/</code></td></tr><tr><td><code>/spectra-discuss</code></td><td>針對單一主題聚焦討論並收斂結論</td></tr><tr><td><code>/spectra-ask</code></td><td>查詢 <code>openspec/</code> 文件回答問題</td></tr><tr><td><code>/spectra-ingest</code></td><td>用外部脈絡更新既有 change</td></tr><tr><td><code>/spectra-debug</code></td><td>四階段系統化除錯</td></tr><tr><td><code>/spectra-audit</code></td><td>審查危險預設值、型別混淆、靜默失敗</td></tr><tr><td><code>/spectra-commit</code></td><td>提交特定 change 相關檔案</td></tr><tr><td><code>/handoff</code></td><td>把對話濃縮成交接文件（存 OS temp，不進工作區）</td></tr></tbody></table></div>
+<hr>
+<h2 id="先判斷這件事要走到多深">先判斷這件事要走到多深</h2>
+<p>不是每個改動都值得走完整條流程。把一個改字串的工作硬拆成 15 個 task，結果是下次沒人願意走流程——<strong>規範被繞過的主因是它對小事太重，不是對大事太輕</strong>。</p>
+<div class="table-wrap"><table><thead><tr><th>規模</th><th>判斷依據</th><th>走法</th></tr></thead><tbody><tr><td>小</td><td>單一檔案、行為明確、可直接驗證</td><td>直接做，不開 change。專案 <code>AGENTS.md</code> 的驗證要求照跑</td></tr><tr><td>中</td><td>跨數個檔案但不動架構、不改對外介面</td><td><code>/spectra-propose</code> 走到 <code>design.md</code> 收斂即可，不必硬湊任務數</td></tr><tr><td>大</td><td>跨模組、不可逆、動到對外介面或資料結構</td><td>完整流程：<code>/grill</code> → <code>propose</code> → <code>apply</code> → <code>analyze</code> → <code>archive</code></td></tr></tbody></table></div>
+<p><strong>分級是使用者的決定，AI 不自行降級。</strong> 判斷不確定時往上一級走，或直接問；把大事誤判成小事的代價，遠高於把小事誤判成大事。</p>
+<p>拆 <code>tasks.md</code> 時<strong>照垂直切片拆，不要照水平分層拆</strong>：每個 task 應該是一條可獨立驗證的窄路徑（從入口到落地），而不是「先把所有 repository 寫完，再寫所有 service」。水平拆法要到最後一層合起來才知道對不對，前面所有 task 的「完成」都是空的。</p>
+<hr>
+<h2 id="階段-0-需求釐清-可選">階段 0 — 需求釐清（可選）</h2>
+<p>需求還模糊時先跑：</p>
+<pre><code>/grill &lt;要釐清的題目&gt;</code></pre>
+<p>以決策樹分輪提問（每題附建議答案），事實由 AI 自查、決策留給你；術語敲定即寫入 <code>CONTEXT.md</code>，重大取捨寫 ADR。訪談結論直接作為下一階段的輸入。已想清楚的需求可跳過，或改用 <code>/spectra-discuss</code> 做輕量討論。</p>
+<h2 id="階段-1-規格提案-sdd-起點">階段 1 — 規格提案（SDD 起點）</h2>
+<pre><code>/spectra-propose &lt;feature&gt;</code></pre>
+<p>產出並自動 park：</p>
+<pre><code>openspec/changes/{feature}/
+├── proposal.md   # Why / What Changes / Impact
+├── design.md     # 架構、資料流、API、DB 設計
+├── tasks.md      # 可執行任務清單（- [ ]）
+└── specs/&lt;capability&gt;/spec.md  # Requirement + Scenario（GIVEN/WHEN/THEN）</code></pre>
+<p>流程內建：placeholder 自查、內部一致性檢查、scope 檢查（&gt;15 tasks 建議拆分）、<code>spectra analyze</code> 修正迴圈（最多 2 輪）、<code>spectra validate</code>。完成後 change 處於 parked 狀態，<code>/spectra-apply</code> 時自動詢問 unpark。</p>
+<h2 id="階段-2-實作-內嵌-tdd">階段 2 — 實作（內嵌 TDD）</h2>
+<pre><code>/spectra-apply &lt;feature&gt;</code></pre>
+<p>單一指令完成整個實作循環：</p>
+<ol><li>選定 change → <code>spectra in-progress add</code>（idempotent、自動處理 unpark、啟動 <code>.spectra/touched/</code> 追蹤）</li><li><strong>Preflight</strong>：檢查 artifacts 引用的檔案是否漂移／遺失（CLI <code>preflight</code> 欄位）</li><li><strong>Artifact 品質檢查</strong>：<code>spectra analyze</code> 有 Critical 發現時先修再做</li><li>讀取 contextFiles（proposal / design / spec / tasks）</li><li>讀 <code>.spectra.yaml</code> 決定紀律（見下表）</li><li>對每個 <code>- [ ]</code> task：<ul><li><strong>Red</strong>：先寫失敗測試——測試值<strong>取自 spec.md 的 <code>##### Example:</code> 區塊</strong>，不自行發明</li><li><strong>Green</strong>：不違反 <code>design.md</code> 架構的最小實作；不得超出 spec Scenario</li><li><strong>Refactor</strong>：測試持續通過下改善品質（不得跨層搬遷）</li><li>完成即呼叫 <code>spectra task done --change "{feature}" &lt;task-id&gt;</code>（同時勾 checkbox + 寫 <code>.spectra/touched/</code>）</li></ul></li><li>全部完成後確認 <code>state: "all_done"</code>，建議 archive</li></ol>
+<h3 id="spectra-yaml-旗標"><code>.spectra.yaml</code> 旗標</h3>
+<div class="table-wrap"><table><thead><tr><th>旗標</th><th>效果</th></tr></thead><tbody><tr><td><code>tdd: true</code></td><td>每個 task 跑 Red-Green-Refactor；TDD 細則由 <code>spectra instructions --skill tdd</code> 動態載入</td></tr><tr><td><code>audit: true</code></td><td>實作全程套用 sharp-edges 紀律（三種對抗視角、安全預設值、型別混淆檢查）</td></tr><tr><td><code>parallel_tasks: true</code></td><td>tasks.md 中連續 <code>[P]</code> 標記的 task 以平行 agent 派發</td></tr></tbody></table></div>
+<h2 id="階段-3-完整性驗證">階段 3 — 完整性驗證</h2>
+<pre><code>spectra analyze {feature} --json</code></pre>
+<p>驗證 Coverage（每個 Requirement 有對應實作）、Consistency（design 與 spec 一致）、Ambiguity / Gaps。結果由 CLI 直接輸出（JSON 可解析），不產生獨立報告檔。</p>
+<h3 id="程式碼審查-可選">程式碼審查（可選）</h3>
+<p><code>spectra analyze</code> 驗的是<strong>規格完整性</strong>——每個 Requirement 有沒有對應實作、design 與 spec 一不一致。它不看程式碼本身寫得對不對。兩者不重疊，也不互相取代。</p>
+<p>補這一段的可選工具是 <a href="https://github.com/alibaba/open-code-review" target="_blank" rel="noreferrer">open-code-review</a>（<code>ocr</code>）的 delegate 模式：</p>
+<pre><code>ocr delegate preview --format json          # 決定審哪些檔案、排除哪些
+ocr delegate rule --format json &lt;paths...&gt;  # 解析每個檔案套用哪些規則</code></pre>
+<p><code>ocr</code> 只做確定性的部分——檔案選取、相關檔案捆綁成審查單元、規則比對；<strong>實際判讀由 agent 用自己的模型執行，不需要另外設定 LLM endpoint</strong>。這個分工正是統一規則所依據的「確定性工作交給程式」：路由與比對用程式，判讀用模型。</p>
+<p>專案層規則放在 <code>.opencodereview/rule.json</code>，依檔案路徑套用。<code>/bootstrap-ai-project</code> 完整模式可選擇產出一份，內容取自 <code>engineering.md</code> 第 2、3 節與 <code>adr.md</code> 中<strong>能由 diff 檢出</strong>的部分。<code>ocr rules check &lt;file&gt;</code> 不需要 LLM 就能確認某個檔案命中哪些規則。</p>
+<p>三條界線：</p>
+<ol><li><strong>不得寫進 <code>verify-gate.json</code>。</strong> 收工閘門不可相依外部 CLI——<code>ocr</code> 沒裝時整個閘門會失效。跑不跑、理不理它的發現，都是人的決定。</li><li><strong>它不是機械強制。</strong> <code>rule</code> 欄位是自然語言，判斷仍由模型做，與驗證閘門（只看退出碼）本質不同。需要嚴謹證據鏈時仍要靠 Spectra TDD 的 test-observer。</li><li><strong>規則命中可證明，判斷結果不可當作已驗證事實。</strong> <code>ocr rules check</code> 證明的是「這條規則套用到這個檔案」，不是「這個檔案沒問題」。</li></ol>
+<p>採納它的覆蓋率自查紀律：每個 previewed 檔案都要標為已審，或明確寫出跳過原因——這是本流程原本沒有的，過去沒有任何機制確保 review 沒漏檔。</p>
+<h2 id="階段-n-歸檔">階段 N — 歸檔</h2>
+<pre><code>/spectra-archive &lt;feature&gt;</code></pre>
+<ul><li>spec snapshot + delta 套用到 <code>openspec/specs/&lt;capability&gt;/spec.md</code></li><li><strong>@trace injection</strong>（依賴 <code>.spectra/touched/&lt;feature&gt;.json</code>，由前面 <code>spectra task done</code> 累積）</li><li>identity recording / vector indexing</li><li>將 <code>openspec/changes/{feature}/</code> 移到 <code>openspec/changes/archive/YYYY-MM-DD-{feature}/</code></li></ul>
+<hr>
+<h2 id="發布與汰除-歸檔之後">發布與汰除（歸檔之後）</h2>
+<p>本節不編號——發布不是每個 change 都要做一次，通常是數個 change 累積後一起上線。它由<strong>人主導</strong>：推進與回滾是你的決定，不是 AI 的。方法論改寫自 <a href="https://github.com/addyosmani/agent-skills" target="_blank" rel="noreferrer">addyosmani/agent-skills</a>（MIT）。</p>
+<h3 id="上線前檢查清單">上線前檢查清單</h3>
+<p>依專案性質取用，不適用的整組跳過。</p>
+<p><strong>程式品質</strong>：測試全通過；建置無警告；lint 與型別檢查通過；沒有該解決卻留著的 TODO；沒有除錯用的輸出殘留；預期的失效模式都有錯誤處理。</p>
+<p><strong>安全</strong>：程式與版控中沒有祕密；相依套件稽核無高風險項目；對外端點都有輸入驗證；認證與授權檢查到位；認證端點有速率限制。</p>
+<p><strong>效能</strong>：關鍵路徑沒有 N+1 查詢；資料庫查詢有對應索引；重複查詢與靜態資源有快取。</p>
+<p><strong>基礎設施</strong>：正式環境的環境變數已設定；資料庫遷移已套用或已備妥；log 與錯誤回報已接好；健康檢查端點存在且會回應。</p>
+<p><strong>文件</strong>：README 反映新的安裝需求；對外介面文件為最新；本次的架構決策已寫成 ADR；變更紀錄已更新。</p>
+<p>前端專案另需檢查 Core Web Vitals、圖片最佳化、bundle 大小、鍵盤操作、螢幕閱讀器、色彩對比（WCAG 2.1 AA）與焦點管理。純後端服務、排程與 gateway 不適用這組。</p>
+<h3 id="分階段推出">分階段推出</h3>
+<pre><code>staging（完整測試 + 手動煙霧測試）
+  → 正式環境部署，功能旗標關閉（先確認部署本身沒問題）
+  → 開給內部使用者，觀察 24 小時
+  → 5% 使用者，觀察 24–48 小時
+  → 25% → 50% → 100%，每一階都觀察
+  → 全量後觀察一週，再清掉功能旗標</code></pre>
+<p>每一階用同一組門檻判斷：</p>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>推進</th><th>停下來查</th><th>回滾</th></tr></thead><tbody><tr><td>錯誤率</td><td>在基準的 10% 以內</td><td>高於基準 10–100%</td><td>超過基準兩倍</td></tr><tr><td>p95 延遲</td><td>在基準的 20% 以內</td><td>高於基準 20–50%</td><td>惡化超過 50%</td></tr><tr><td>業務指標</td><td>持平或變好</td><td>下滑 5% 以內</td><td>下滑超過 5%</td></tr></tbody></table></div>
+<h3 id="回滾">回滾</h3>
+<p><strong>部署前就要寫好</strong>：觸發條件、實際步驟（關旗標或重新部署前一版）、回滾後的驗證方式、資料庫遷移該怎麼處理、預計需要多久。</p>
+<p>錯誤率超過基準兩倍、p95 延遲惡化逾五成、發現資料完整性問題或安全漏洞——立即回滾，不要先討論。回滾是負責任的工程行為，把壞掉的功能留在線上才是失敗。</p>
+<h3 id="汰除舊功能">汰除舊功能</h3>
+<p>決定要不要汰除前先回答：它還有無可取代的價值嗎？有多少消費者依賴它？替代品存在嗎？每個消費者的遷移成本多少？<strong>不汰除</strong>的持續維護成本又是多少？</p>
+<ul><li><strong>預設採建議性汰除</strong>——給警告、文件與替代方案，讓使用者按自己的節奏遷移。</li><li>只有在舊系統有安全問題、阻擋進度，或維護成本已不可持續時，才用<strong>強制性汰除</strong>：給硬期限，並提供遷移工具。</li><li>順序固定：替代品先做好並在正式環境驗證過 → 公告汰除時程與遷移指南 → 逐一遷移消費者並確認行為一致 → <strong>用指標或 log 確認零使用後</strong>才移除程式、測試、文件與設定。</li></ul>
+<p><strong>資料庫結構一律三段式</strong>：</p>
+<pre><code>擴充 → 遷移 → 收縮
+新增可為空的欄位   回填既有資料、雙寫   另一次部署才刪掉舊欄位</code></pre>
+<p>絕不原地改名，也絕不在同一次部署裡既新增又刪除——推出期間新舊程式會同時在跑，其中一邊會查到不存在的欄位。遷移一定要寫好並測過回復路徑才能合併。</p>
+<hr>
+<h2 id="測試證據觀測層-可選-由-bootstrap-ai-project-完整模式建立">測試證據觀測層（可選，由 <code>/bootstrap-ai-project</code> 完整模式建立）</h2>
+<p>在 <code>spectra_tdd.effective: true</code> 且使用者於獨立 Preview 確認後，bootstrap 會在下游專案建立：</p>
+<div class="table-wrap"><table><thead><tr><th>元件</th><th>作用</th></tr></thead><tbody><tr><td><code>.claude/rules/testing.md</code></td><td>測試證據契約（帶 <code>bootstrap-ai-project:tdd-observability</code> marker）</td></tr><tr><td><code>.ai/bootstrap-ai-project/hooks/test-observer.py</code>（或 <code>.mjs</code>）</td><td>觀察已選宿主支援的 lifecycle，把 allowlist 內正式測試命令的實際結果整理為 evidence</td></tr><tr><td><code>.ai/bootstrap-ai-project/tdd-observer.json</code></td><td>共用 observer 設定：framework、正式命令 allowlist、機密遮蔽規則</td></tr><tr><td><code>openspec/changes/{feature}/test-evidence.md</code></td><td>每個 change 的永久測試證據報告（由 Rule 建立，observer 提供觀測資料）</td></tr></tbody></table></div>
+<p>重點界線：</p>
+<ul><li>observer <strong>只觀察、不執行測試</strong>，不能把 agent 的敘述升格為已驗證事實</li><li>只有 description 完全符合 <code>TDD Red: task=&lt;id&gt;; evidence=&lt;key&gt;</code>（Green / Refactor 同格式）的 allowlist 命令才算 evidence</li><li>compound command（含 <code>&amp;&amp;</code>、<code>|</code>、redirect 等）一律忽略，不作 evidence</li><li>細節見 <code>.agents/skills/bootstrap-ai-project/references/tdd-observability.md</code></li></ul>
+<hr>
+<h2 id="統一規則-原-sdd-preflight-md-併入">統一規則（原 sdd-preflight.md 併入）</h2>
+<h3 id="a-spectra-cli-失敗處理">A. Spectra CLI 失敗處理</h3>
+<p>任何 <code>spectra</code> 指令回報 <code>command not found</code> 或非 0 退出碼時：<strong>立即停止流程並回報錯誤輸出</strong>。不可靜默忽略、不可改用 Edit 繞過、不可累積到最後再處理——否則 archive 會缺 trace 資料而失敗。</p>
+<h3 id="b-tasks-md-同步規則">B. tasks.md 同步規則</h3>
+<ul><li>完成 task <strong>必須</strong>呼叫 <code>spectra task done --change "{feature}" &lt;task-id&gt;</code>（同時勾 checkbox + 寫 <code>.spectra/touched/</code>）</li><li><strong>每完成一個 task 立即呼叫，不得累積批次處理</strong></li><li><strong>禁止直接 Edit <code>tasks.md</code> 的 checkbox</strong></li><li>不使用任何外部 task 管理工具——tasks.md 是唯一進度來源</li></ul>
+<h3 id="c-sdd-文件唯讀規則">C. SDD 文件唯讀規則</h3>
+<p>實作階段不得修改 <code>spec.md</code>、<code>design.md</code>、<code>proposal.md</code>、<code>tasks.md</code> 內容。需修改規格<strong>必須回到 <code>/spectra-propose</code> 修訂</strong>（或用 <code>/spectra-ingest</code> 帶入外部脈絡），不可在實作中自行調整。</p>
+<h3 id="d-衝突處理">D. 衝突處理</h3>
+<p>測試與 <code>spec.md</code> 衝突時：<strong>停止並回報</strong>，由使用者決定修改測試或修訂規格。AI 不可自行選邊、不可自行降低測試標準。</p>
+<h3 id="e-不得超出規格">E. 不得超出規格</h3>
+<p>不得實作超出 <code>spec.md</code> Requirement / Scenario 的功能；Refactor 不得改變 <code>design.md</code> 規定的架構分層、資料流、模組職責。</p>
+<h3 id="f-詞彙表-context-md">F. 詞彙表（CONTEXT.md）</h3>
+<p><code>CONTEXT.md</code> 是領域術語的單一事實來源，由 <code>/grill</code> 沉澱。三條紀律：</p>
+<ol><li><strong>讀取義務</strong>——建立提案或開始實作前先讀（不存在則跳過）。</li><li><strong>沿用 canonical term</strong>——型別、函式、變數與 spec 用語照詞彙表寫；列在 <code>_避免_</code> 底下的講法不得出現在新程式碼。</li><li><strong>衝突停止</strong>——使用者用語、程式碼現況與詞彙表定義矛盾時停止並回報，不自行選邊、不默默引入同義詞。</li></ol>
+<p>執行機制在下游專案的 <code>.claude/rules/glossary.md</code>，格式定義見 <code>grill/CONTEXT-FORMAT.md</code>。</p>
+<h3 id="g-架構決策紀錄-adr">G. 架構決策紀錄（ADR）</h3>
+<p><code>design.md</code> 是單一 change 的設計，會隨 change 歸檔；ADR 是脫離 change 生命週期的長期約束。三條紀律：</p>
+<ol><li><strong>讀取義務</strong>——建立提案或開始實作前，先讀 <code>docs/adr/README.md</code> 索引（不存在則跳過）。</li><li><strong>衝突停止</strong>——與 <code>accepted</code> 狀態的 ADR 衝突時停止並回報，由使用者決定修訂提案或以新 ADR supersede，AI 不可自行選邊。</li><li><strong>不可刪改</strong>——supersede 只能標記舊 ADR 狀態並新增取代者，不得刪除或改寫既有決策內容。</li></ol>
+<p>執行機制在下游專案的 <code>.claude/rules/adr.md</code>（由 <code>/bootstrap-ai-project</code> 完整模式的 Rules 選項建立），不是修改 <code>spectra-*</code> Skill。ADR 三條件與 supersede 規則的完整文字見該 Rule 與 <code>grill/ADR-FORMAT.md</code>。</p>
+<h3 id="h-實作期工程紀律">H. 實作期工程紀律</h3>
+<p>由下游專案的 <code>.claude/rules/engineering.md</code> 注入，六節各有適用條件：</p>
+<ol><li><strong>非瑣碎決策的對抗審查</strong>——跨模組、不可逆、或宣稱型別系統驗證不了的性質時，寫下 CLAIM、交出「產物＋契約」請求對抗式審查（不給 CLAIM，否則審查者會附和）、分類發現、最多三輪就升級給人。TDD 的 Red 步驟已滿足行為宣稱的懷疑要求。</li><li><strong>介面與契約設計</strong>——契約先行、錯誤語意一致、只在邊界驗證、加而不改。</li><li><strong>可觀測性</strong>——先寫值班會問的問題再加訊號、結構化 log 加 correlation ID、RED 指標與 p95、只對症狀告警。</li><li><strong>以官方文件為準</strong>——定版本 → 抓具體文件頁 → 照文件簽章實作 → 標出處。Stack Overflow、部落格與訓練資料不算主要依據；查不到就明確標為未驗證，不要用模糊免責帶過。</li><li><strong>升級給人的格式與迴圈上限</strong>——本文 D、F、G 與該 Rule 各節都會要求「停止並回報」，但沒說要報什麼。升級一次給齊四件事：卡在哪、試過什麼、具體選項 A/B/C 附建議、不決定的後果，並指明回答形式（是非／多選／自由）。同一個失敗連續嘗試三次仍未解決就停下來升級，與第 1 節的三輪門檻同一個數字。</li><li><strong>Context 工程</strong>——大範圍探索交給唯讀 subagent，只把結論帶回主線程；每完成一個可驗證階段主動把狀態壓回產物再繼續，不要等宿主的自動壓縮；審查槓桿在理解與計畫，不在逐行 diff。取捨順序固定為正確性 &gt; 完整性 &gt; 精簡度。</li></ol>
+<p><code>audit: true</code> 只涵蓋安全面向；本規則涵蓋一般性決策，兩者互補。</p>
+<h3 id="i-發布與汰除">I. 發布與汰除</h3>
+<p>上線與汰除由人決定，AI 不自行推進階段、不自行回滾。門檻、分階段順序與資料庫三段式遷移見「發布與汰除（歸檔之後）」章節。</p>
+<h3 id="j-收工閘門-由-hook-強制">J. 收工閘門（由 Hook 強制）</h3>
+<p>前面 A–I 都是文字約束，靠 agent 記得遵守。兩個 <code>Stop</code> hook 把其中最容易被忽略的部分變成機械強制：</p>
+<ol><li><strong>驗證閘門</strong>（<code>verify-gate.py</code>）——SessionStart 記錄 HEAD 與工作區 fingerprint；Stop 合併本 session 的未提交與已提交路徑，再跑 <code>.ai/bootstrap-ai-project/verify-gate.json</code> 列出的驗證命令，成功才更新 checkpoint；SessionEnd 清除暫存狀態。只看退出碼，不比對輸出樣式；<code>paths</code> 可避免無關慢測試，checkpoint 缺失或損壞時保守全跑；連續三次未過就放行並要求如實告知。</li><li><strong>宣稱證據</strong>（<code>claim-ledger.py</code> + <code>claim-guard.py</code>）——記錄執行過的 <code>test</code>／<code>check</code>／<code>search</code> 類命令，收工時比對訊息中的宣稱是否有對應紀錄。沒跑測試就說「測試通過」會被擋。</li></ol>
+<p><strong>這兩個是防呆不是防駭</strong>：宣稱檢查靠關鍵字，換個說法就繞得過去，也不驗證宣稱與紀錄是否真的對應。它們擋的是疏忽。需要嚴謹證據鏈時仍要靠 Spectra TDD 的 test-observer。</p>
+<p>共用 scripts 與 config 位於 <code>.ai/bootstrap-ai-project/</code>。Claude 由 <code>.claude/settings.json</code>、Codex 由可信任專案的 <code>.codex/hooks.json</code> 註冊同一組 runtime；宿主設定格式不同，不共用同一份 registration 檔。</p>
+<hr>
+<h2 id="spectra-ui-灰色-checkbox-的處理">Spectra UI 灰色 checkbox 的處理</h2>
+<p>若 Spectra app 顯示某 change 的 task checkbox 為灰色（disabled），代表 UI 層因 assignee 等原因將此 change 視為唯讀。<strong>此時改用 CLI 補勾</strong>：</p>
+<pre><code>spectra task done --change &lt;feature&gt; &lt;task-id&gt;</code></pre>
+<p>CLI 直接寫入 <code>tasks.md</code> 與 <code>.spectra/touched/&lt;feature&gt;.json</code>，不受 UI 權限限制。永遠優先使用 CLI——它才是唯一同時更新 checkbox 與 trace 資料的合法路徑。</p>
+<hr>
+<h2 id="與官方-plugin-的互動點">與官方 Plugin 的互動點</h2>
+<p><code>/bootstrap-ai-project</code> 的 Plugin 階段<strong>只輸出建議、不代為安裝</strong>（見 <code>references/apply-plugins.md</code>）。plugin 是輔助工具，不取代 spec.md 合約——若 plugin 建議的修改違反 <code>design.md</code>，仍應拒絕。</p>
+<div class="table-wrap"><table><thead><tr><th>流程階段</th><th>可用 plugin</th><th>邊界</th></tr></thead><tbody><tr><td>階段 2 實作</td><td><code>*-lsp</code>（typescript-lsp / pyright-lsp 等）</td><td>型別檢查與 navigation，不影響 spec 合約</td></tr><tr><td>階段 2 Refactor 子步驟</td><td><code>code-simplifier</code>、<code>code-modernization</code></td><td>採納前必須重跑測試；不得跨層搬遷</td></tr><tr><td>階段 3 驗證</td><td><code>code-review</code></td><td>補通用品質審查，不取代 <code>spectra analyze</code></td></tr><tr><td>歸檔後</td><td><code>commit-commands</code>、<code>github</code> / <code>pr-review-toolkit</code></td><td>產生 commit / PR；task 完成標記仍須走 <code>spectra task done</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="產出檔案總覽">產出檔案總覽</h2>
+<div class="table-wrap"><table><thead><tr><th>檔案</th><th>由哪個指令產生 / 更新</th></tr></thead><tbody><tr><td><code>CONTEXT.md</code></td><td><code>/grill</code>（術語敲定時 lazy 建立）</td></tr><tr><td><code>.claude/rules/glossary.md</code></td><td><code>/bootstrap-ai-project</code>（完整模式選取詞彙表 Rule）</td></tr><tr><td><code>.claude/rules/engineering.md</code></td><td><code>/bootstrap-ai-project</code>（完整模式選取工程紀律 Rule）</td></tr><tr><td><code>.agents/skills/&lt;role&gt;/</code>、<code>.claude/skills/&lt;role&gt;/</code></td><td><code>$bootstrap-ai-project</code>／<code>/bootstrap-ai-project</code>（角色選 Skill 或 Both）</td></tr><tr><td><code>.codex/agents/&lt;role&gt;.toml</code>、<code>.claude/agents/&lt;role&gt;.md</code></td><td><code>$bootstrap-ai-project</code>／<code>/bootstrap-ai-project</code>（角色選 Agent 或 Both）</td></tr><tr><td><code>.ai/bootstrap-ai-project/hooks/</code>、<code>verify-gate.json</code></td><td><code>$bootstrap-ai-project</code>／<code>/bootstrap-ai-project</code>（共用 Hook runtime）</td></tr><tr><td><code>.opencodereview/rule.json</code></td><td><code>$bootstrap-ai-project</code>／<code>/bootstrap-ai-project</code>（完整模式且偵測到應用程式碼時選取；<strong>create-only</strong>，既有檔案不覆寫）</td></tr><tr><td><code>.claude/settings.json</code>、<code>.codex/hooks.json</code></td><td>各宿主的 Hook registration</td></tr><tr><td><code>docs/adr/NNNN-*.md</code></td><td><code>/grill</code> 訪談中、<code>design.md</code> 收斂後、歸檔前回收——三條件成立時 lazy 建立</td></tr><tr><td><code>docs/adr/README.md</code></td><td>ADR 索引，第一份 ADR 出現時建立；每次新增或改狀態當場更新</td></tr><tr><td><code>.claude/rules/adr.md</code></td><td><code>/bootstrap-ai-project</code>（完整模式選取 ADR 契約 Rule）</td></tr><tr><td><code>openspec/changes/{feature}/proposal.md</code>、<code>design.md</code>、<code>specs/&lt;capability&gt;/spec.md</code></td><td><code>/spectra-propose</code></td></tr><tr><td><code>openspec/changes/{feature}/tasks.md</code></td><td><code>/spectra-propose</code> 建立、<code>spectra task done</code> 勾選（<strong>禁止直接 Edit</strong>）</td></tr><tr><td><code>.spectra/touched/{feature}.json</code></td><td><code>spectra task done</code> 自動寫入（archive 的 @trace 來源）</td></tr><tr><td><code>openspec/changes/{feature}/test-evidence.md</code></td><td>測試證據觀測層啟用時，<code>/spectra-apply</code> 過程中依 Rule 建立</td></tr><tr><td><code>openspec/changes/archive/YYYY-MM-DD-{feature}/</code></td><td><code>/spectra-archive</code></td></tr><tr><td><code>openspec/specs/&lt;capability&gt;/spec.md</code>（主規格）</td><td><code>/spectra-archive</code> 同步 delta</td></tr><tr><td><code>.spectra.yaml</code></td><td><code>/bootstrap-ai-project</code>（完整模式、Spectra TDD 確認後）</td></tr></tbody></table></div>
+<hr>
+<h2 id="維護提醒-需要同步的雙寫點">維護提醒：需要同步的雙寫點</h2>
+<p>兩組規則各自存在於兩處，改動時必須一併更新：</p>
+<div class="table-wrap"><table><thead><tr><th>規則</th><th>訪談當下使用</th><th>佈署到下游專案</th></tr></thead><tbody><tr><td>ADR 三條件、格式範本、supersede</td><td><code>grill/ADR-FORMAT.md</code></td><td><code>.agents/skills/bootstrap-ai-project/templates/rules/adr.md</code></td></tr><tr><td>詞彙表格式與收錄規則</td><td><code>grill/CONTEXT-FORMAT.md</code></td><td><code>.agents/skills/bootstrap-ai-project/templates/rules/glossary.md</code></td></tr></tbody></table></div>
+<p>無法合併成單一檔案：下游專案不會有 grill skill 的檔案可以引用，Rule 必須自含全文。真正要求逐字一致的內容以 <code>shared-contract:adr</code>／<code>shared-contract:glossary</code> markers 圈選，並由 <code>.claude/tools/tests/test_shared_contracts.py</code> 自動阻擋漂移。</p>
+
+<hr>
+<h2 id="skills"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7L11.5 6.8"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.5-1.5"/></svg>Skill 目錄<span class="count">22</span></h2>
+<p class="section-lede">由目錄自動掃描產生，新增或移除 skill 後重跑產生器即會更新。</p>
+<h3 class="group"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>專案初始化<span class="count">1</span></h3><div class="cards"><article class="card"><h4>$bootstrap-ai-project / /bootstrap-ai-project</h4><p>交易式流程建立 Claude／Codex 雙入口、角色、governance、Hooks 與 Spectra TDD。</p></article></div><h3 class="group"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z"/></svg>需求釐清與交接<span class="count">3</span></h3><div class="cards"><article class="card"><h4>/grill</h4><p>決策樹分輪訪談釐清需求，同步維護 CONTEXT.md 詞彙表與 docs/adr/。</p></article><article class="card"><h4>/first-principles</h4><p>把問題拆回地基事實再由下而上重建；先試著刪除需求本身。</p></article><article class="card"><h4>/handoff</h4><p>把對話濃縮成交接文件，讓新 session 無縫接手。</p></article></div><h3 class="group"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7L11.5 6.8"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.5-1.5"/></svg>Spectra 指令鏈<span class="count">12</span></h3><div class="cards"><article class="card card--readonly"><h4>/spectra-propose</h4><p>建立含 proposal / design / tasks / spec 的變更提案。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-apply</h4><p>依 tasks 實作，內嵌 Red-Green-Refactor。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-archive</h4><p>歸檔完成的 change 並同步主規格。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-ask</h4><p>查詢 openspec/ 文件回答問題。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-discuss</h4><p>針對單一主題聚焦討論並收斂結論。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-ingest</h4><p>用外部脈絡更新既有 change。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-debug</h4><p>四階段系統化除錯。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-audit</h4><p>審查危險預設值、型別混淆與靜默失敗。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-commit</h4><p>提交特定 change 相關檔案。</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-analyze</h4><p>Analyze artifact consistency for a change</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-drift</h4><p>Detect drift between a Spectra change and the current codebase state</p><span class="tag">Spectra CLI 產生．唯讀</span></article><article class="card card--readonly"><h4>/spectra-verify</h4><p>Verify implementation matches artifacts</p><span class="tag">Spectra CLI 產生．唯讀</span></article></div><h3 class="group"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 8l-4 4 4 4"/><path d="M15 8l4 4-4 4"/></svg>開發角色<span class="count">4</span></h3><div class="cards"><article class="card"><h4>/implementer</h4><p>在主代理已確定的需求、架構與寫入範圍內完成小而可驗證的程式碼實作。</p></article><article class="card"><h4>/test-engineer</h4><p>在既有測試架構內建立可重現證據、補足測試並執行明確的驗證命令。</p></article><article class="card"><h4>/doc-writer</h4><p>依 repository 證據更新使用者或開發文件，維持來源可追溯且不臆測未確認行為。</p></article><article class="card"><h4>/git-commit</h4><p>只在使用者明確要求時，審查既有 staged scope、機密風險與驗證證據後建立單一目的 commit。</p></article></div><h3 class="group"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9 9a2.8 2.8 0 0 1-4-4l8-10z"/></svg>專門任務<span class="count">2</span></h3><div class="cards"><article class="card"><h4>/vuln-fix</h4><p>保守、最小 diff 的安全弱點修補。</p></article><article class="card"><h4>/winform-to-quartz-migration</h4><p>把舊 WinForm／timer 常駐程式遷移進 .NET 8 Quartz 排程範本。</p></article></div>
+
+<hr>
+<h2 id="examples"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 8l-4 4 4 4"/><path d="M15 8l4 4-4 4"/></svg>格式範例集</h2>
+<p class="section-lede">全部從既有檔案抽取，來源標在每則下方——抽不到時產生器會直接報錯，
+不會產出缺角的頁面。</p>
+<article class="example"><h3>/grill 的提問格式</h3><p>每題編號並附上建議答案，你只需要做決策。</p><pre><code>❓ **Q1** - **&lt;問題標題&gt;**：&lt;問題內容，可以多段，可含選項&gt;
+
+➡️ &lt;你的建議答案&gt;</code></pre><p class="source">來源：<code>.claude/skills/grill/SKILL.md</code> — 「訪談協議」</p></article><article class="example"><h3>ADR 範本</h3><p>一份 ADR 可以只有一段話——價值在於記下做過這個決策以及為什麼。</p><pre><code># {決策的簡短標題}
+
+{一到三句：脈絡是什麼、我們決定了什麼、為什麼。}</code></pre><p class="source">來源：<code>.claude/skills/grill/ADR-FORMAT.md</code> — 「範本」</p></article><article class="example"><h3>CONTEXT.md 詞彙表格式</h3><p>同一概念有多種講法時選定一個，其餘列進 _避免_。</p><pre><code>## Language
+
+**Order**：
+客戶送出、由本系統承接履行的採購請求。
+_避免_：Purchase、transaction</code></pre><p class="source">來源：<code>.claude/skills/grill/CONTEXT-FORMAT.md</code> — 「結構」</p></article><article class="example"><h3>TDD 測試命令的 description 格式</h3><p>只有完全符合這個格式的 allowlist 命令才會被 observer 算成證據。</p><pre><code>TDD Red: task=&lt;task-id&gt;; evidence=&lt;safe-key&gt;
+TDD Green: task=&lt;task-id&gt;; evidence=&lt;safe-key&gt;
+TDD Refactor: task=&lt;task-id&gt;; evidence=&lt;safe-key&gt;</code></pre><p class="source">來源：<code>.agents/skills/bootstrap-ai-project/templates/rules/testing.md</code> — 「執行測試」</p></article><article class="example"><h3>每個 Task 的終端摘要</h3><p>呼叫 spectra task done 之前輸出，狀態只能是四種之一。</p><pre><code>## TDD 測試摘要
+- Task：&lt;task-id&gt;
+- 狀態：proven / tested-not-proven / failed / incomplete
+- 行為與 Spec：&lt;behavior&gt; — &lt;requirement/scenario/example&gt;
+- 新增／修改案例：&lt;test-file&gt; — &lt;case&gt;
+- Red → Green → Refactor：&lt;result-chain&gt;
+- 正式命令：&lt;command-key&gt;（&lt;passed&gt; passed / &lt;failed&gt; failed / &lt;skipped&gt; skipped，&lt;duration&gt;）
+- 完整報告：openspec/changes/&lt;change-name&gt;/test-evidence.md
+- 未觀測／未覆蓋：&lt;none-or-gaps&gt;</code></pre><p class="source">來源：<code>.agents/skills/bootstrap-ai-project/templates/rules/testing.md</code> — 「Task 完成前」</p></article><article class="example"><h3>可觀測性：先寫問題，再加訊號</h3><p>每個訊號都要對應到其中一題；對應不到就不要加。</p><pre><code>功能：付款重試
+值班會問：
+1. 有多少比例是第一次就成功，多少是重試後才成功？
+2. 永久失敗時，原因是什麼？（供應商錯誤／逾時／驗證失敗）
+3. 供應商是不是比平常慢？</code></pre><p class="source">來源：<code>.agents/skills/bootstrap-ai-project/templates/rules/engineering.md</code> — 「先寫問題，再加訊號」</p></article><article class="example"><h3>資料庫結構的三段式遷移</h3><p>絕不原地改名，也絕不在同一次部署裡既新增又刪除。</p><pre><code>擴充 → 遷移 → 收縮
+新增可為空的欄位   回填既有資料、雙寫   另一次部署才刪掉舊欄位</code></pre><p class="source">來源：<code>.claude/docs/development-workflow.md</code> — 「汰除舊功能」</p></article>
+</main>
+</div>
+</body>
+</html>

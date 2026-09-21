@@ -17,8 +17,10 @@ That's it: the relay server auto-starts under omp's profile-independent global d
 
 ## Development
 
-- `bun run build` — bundles the extension into `dist/extension/`, zips it for GH releases, and regenerates the embedded CLI install assets under `packages/coding-agent/src/tools/browser/relay/extension-assets/` (**commit those**).
+- `bun run build` — bundles the extension into `dist/extension/`, regenerates the embedded CLI install assets under `packages/coding-agent/src/tools/browser/relay/extension-assets/` (**commit those**), then packs `dist/omp-browser-relay-extension.zip` for GH releases.
 - `bun scripts/smoke.ts [relay-url] [target-substring]` — end-to-end smoke replicating omp's supervisor + tab-worker double-connection pattern against a live relay.
+
+The build is deliberately dependency-free: CI's `release_github` job runs it without `bun install` and without an external `zip` binary (Windows has none), so `scripts/build-extension.ts` may import only `node:*`, Bun globals, and relative modules that are themselves free of bare package specifiers — the release archive is framed in process by `zip()` from `packages/coding-agent/src/utils/zip-writer.ts`. A bare package import anywhere in that graph breaks the GitHub release job and only that job; a `biome.json` override rejects `@oh-my-pi/**` there. Entries are enumerated recursively, sorted by name, and stamped with a fixed timestamp, so `omp-browser-relay-extension.zip` is byte-deterministic.
 
 ## Limitations
 

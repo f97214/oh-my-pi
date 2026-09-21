@@ -1,0 +1,9 @@
+ ❯ tests/add.test.ts (1 test | 1 failed) 7ms
+   × add > adds numbers 6ms
+     → expected 2 to be 3
+
+ FAIL  tests/add.test.ts > add > adds numbers
+AssertionError: expected 2 to be 3
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)

@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "matcher_events": [
+    "UserPromptExpansion",
+    "PreToolUse",
+    "PostToolUse",
+    "PostToolUseFailure",
+    "PermissionRequest",
+    "Notification",
+    "SubagentStart",
+    "SubagentStop",
+    "PreCompact",
+    "SessionStart",
+    "SessionEnd"
+  ],
+  "matcher_forbidden_events": [
+    "UserPromptSubmit",
+    "Stop",
+    "TeammateIdle",
+    "TaskCompleted",
+    "ConfigChange",
+    "WorktreeCreate",
+    "WorktreeRemove"
+  ],
+  "host_events": {
+    "claude": [
+      "UserPromptExpansion",
+      "PreToolUse",
+      "PostToolUse",
+      "PostToolUseFailure",
+      "PermissionRequest",
+      "Notification",
+      "SubagentStart",
+      "SubagentStop",
+      "PreCompact",
+      "SessionStart",
+      "SessionEnd",
+      "Stop",
+      "TeammateIdle",
+      "TaskCompleted",
+      "ConfigChange",
+      "WorktreeCreate",
+      "WorktreeRemove"
+    ],
+    "codex": [
+      "PreToolUse",
+      "PermissionRequest",
+      "PostToolUse",
+      "PreCompact",
+      "PostCompact",
+      "SessionStart",
+      "SessionEnd",
+      "SubagentStart",
+      "SubagentStop",
+      "UserPromptSubmit",
+      "Stop"
+    ]
+  },
+  "allowed_handler_types": [
+    "command",
+    "prompt",
+    "agent",
+    "http"
+  ],
+  "allowed_project_variable": "${CLAUDE_PROJECT_DIR}",
+  "script_validation": {
+    "powershell": {
+      "suffix": ".ps1",
+      "requires_utf8_bom": true,
+      "required_tokens": [
+        "InputEncoding",
+        "OutputEncoding"
+      ]
+    },
+    "posix": {
+      "suffix": ".sh",
+      "forbids_utf8_bom": true,
+      "requires_shebang": true,
+      "requires_executable_bit": true
+    }
+  },
+  "commit_patterns": {
+    "subject_pattern": "^(feat|fix|docs|refactor|test|chore|build|ci|perf|revert)(\\([a-z0-9._/-]+\\))?!?: .{1,72}$",
+    "examples": [
+      "feat(auth): 新增權杖更新流程",
+      "fix: 修正空白設定造成的啟動失敗"
+    ]
+  }
+}

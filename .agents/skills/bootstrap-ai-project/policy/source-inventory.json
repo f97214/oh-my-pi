@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "max_file_bytes": 1048576,
+  "excluded_directories": [
+    ".git",
+    ".hg",
+    ".svn",
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+    "bin",
+    "obj",
+    "coverage",
+    ".coverage",
+    ".next",
+    ".nuxt",
+    "target",
+    "__pycache__",
+    ".venv",
+    "venv"
+  ],
+  "excluded_suffixes": [
+    ".min.js",
+    ".min.css",
+    ".map",
+    ".dll",
+    ".exe",
+    ".so",
+    ".dylib",
+    ".class",
+    ".jar",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".7z",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".ico",
+    ".pdf",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".otf"
+  ],
+  "secret_filenames": [
+    ".env",
+    ".env.local",
+    ".env.development",
+    ".env.production",
+    ".env.test",
+    "credentials.json",
+    "secrets.json",
+    "id_rsa",
+    "id_ed25519"
+  ],
+  "env_key_only_filenames": [
+    ".env.example",
+    ".env.sample"
+  ],
+  "private_key_suffixes": [
+    ".pem",
+    ".key",
+    ".p12",
+    ".pfx"
+  ]
+}

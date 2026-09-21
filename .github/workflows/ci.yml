@@ -810,8 +810,8 @@ jobs:
               pattern: omp-binary-*
               path: packages/coding-agent/binaries
               merge-multiple: true
-         # Dependency-free build (bun APIs + zip only), so no `bun install`
-         # is needed on this runner.
+         # Dependency-free build (bun APIs only, no external binaries), so no
+         # `bun install` is needed on this runner.
          - name: Build browser relay artifacts
            run: bun run --cwd packages/browser-relay build
          # Generated after every other release asset is in place and before
