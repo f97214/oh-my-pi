@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: 把目前的對話濃縮成交接文件，讓另一個 agent 或新的 session 能無縫接手工作。當使用者要換 session、交接工作、說「寫交接」「handoff」時使用。
+description: 使用者要求換 session 或交接工作時，將目前對話整理成可接續的暫存交接文件。
 argument-hint: "[下一個 session 要做什麼？]"
 disable-model-invocation: true
 license: MIT
